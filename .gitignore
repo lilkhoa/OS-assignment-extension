@@ -1,0 +1,7 @@
+# Ignore all dot files
+.*
+# But not .gitignore
+!.gitignore
+
+# Ignore all exe files
+*.exe
