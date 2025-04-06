@@ -1,6 +1,5 @@
 
-#include "queue.h"
-#include "../include/RBTree.h"
+#include "../include/queue.h"
 #include "sched.h"
 #include <pthread.h>
 
@@ -17,7 +16,7 @@ static int slot[MAX_PRIO];
 #endif
 
 #ifdef CFS_SCHED
-#include "RBTree.h"
+#include "../include/RBTree.h"
 
 static RBNode *cfs_ready_tree; 
 
@@ -40,8 +39,8 @@ uint32_t calculate_total_weight() {
 
 /* Calculate process weight based on its priority */
 uint32_t calculate_process_weight(struct pcb_t *proc) {
-    int niceness = -proc->priority;  
-    uint32_t weight = 1024 * (1 << (-niceness / 10)); 
+    int niceness = proc->priority;
+    uint32_t weight = 1024 * (1 << (-niceness / 10));
     return weight;
 }
 
@@ -81,7 +80,7 @@ struct pcb_t *get_cfs_proc(void) {
     }
 
     RBNode *minNode = getMinNode(cfs_ready_tree);
-    struct pcb_t *proc = minNode->data->proc;    
+    struct pcb_t *proc = minNode->data->proc;
     deleteNode(&cfs_ready_tree, minNode->data);
     
     enqueue(&running_list, proc);
@@ -108,7 +107,11 @@ void put_cfs_proc(struct pcb_t *proc) {
 void add_cfs_proc(struct pcb_t *proc) {
     pthread_mutex_lock(&queue_lock);
     
-    proc->vruntime = getMinNode(cfs_ready_tree)->data->proc->vruntime;
+    if (getMinNode(cfs_ready_tree) == NULL) {
+		proc->vruntime = 0;
+	} else {
+		proc->vruntime = getMinNode(cfs_ready_tree)->data->proc->vruntime;
+	}
 	proc->weight = calculate_process_weight(proc);
     proc->time_slice = calculate_time_slice(proc);
 

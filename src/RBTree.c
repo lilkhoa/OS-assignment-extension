@@ -135,13 +135,12 @@ void insertNode(RBNode **root, Dtype *data) {
 
     RBNode *iter = *root;
     RBNode *parent = NULL;
-    while (iter != NULL && compare(iter->data, new_node->data) != 0) {
+    while (iter != NULL) {
         parent = iter;
-        // if root->data < new_node->data
-        if (compare(iter->data, new_node->data) == -1) {
-            iter = iter->right;
-        } else {
+        if (compare(new_node->data, iter->data) == -1) {
             iter = iter->left;
+        } else {
+            iter = iter->right;
         }
     }
     new_node->parent = parent;

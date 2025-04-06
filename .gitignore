@@ -5,3 +5,6 @@
 
 # Ignore all exe files
 *.exe
+
+# Ignore all object files
+*.o
