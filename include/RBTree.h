@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include "common.h"
 
 enum Color { RED=0, BLACK };
 
@@ -15,7 +16,8 @@ enum Traversal {
 
 
 typedef struct Dtype { // abstract data type, representing pcb_t
-    int key;
+    struct pcb_t *proc; // pointer to the process control block
+    int key; // key for comparison
 } Dtype;
 
 typedef struct RBNode {
@@ -25,7 +27,7 @@ typedef struct RBNode {
 } RBNode;
 
 int compare(const Dtype *a, const Dtype *b);
-Dtype *createDtype(int key);
+Dtype *createDtype(struct pcb_t *proc);
 
 // Rotation operations
 RBNode *rotateLeft(RBNode *root, RBNode *x);
@@ -53,5 +55,8 @@ void freeRBTree(RBNode *root);
 
 // Traversal operations
 void traverse(RBNode *root, void (*visit)(RBNode *node), enum Traversal order);
+
+// Getting minimum node
+RBNode *getMinNode(RBNode *root);
 
 #endif // RB_TREE

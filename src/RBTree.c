@@ -16,13 +16,14 @@ int compare(const Dtype *a, const Dtype *b) {
     return 0;
 }
 
-Dtype *createDtype(int key) {
+Dtype *createDtype(struct pcb_t *proc) {
     Dtype *data = (Dtype *)malloc(sizeof(Dtype));
     if (!data) {
         fprintf(stderr, "Memory allocation failed.\n");
         exit(EXIT_FAILURE);
     }
-    data->key = key;
+    data->proc = proc;
+    data->key = proc->vruntime; 
     return data;
 }
 
@@ -389,37 +390,12 @@ void printNode(RBNode *node) {
     printf(" ");
 }
 
-int main() {
-    // Example usage of the RBTree functions
-    RBNode *root = NULL;
-    
-    Dtype *data1 = createDtype(10);
-    Dtype *data2 = createDtype(20);
-    Dtype *data3 = createDtype(15);
-    Dtype *data4 = createDtype(16);
-    Dtype *data5 = createDtype(12);
-    Dtype *data6 = createDtype(3);
-    Dtype *data7 = createDtype(13);
-    
-    insertNode(&root, data1);
-    insertNode(&root, data2);
-    insertNode(&root, data3);
-    insertNode(&root, data4);
-    insertNode(&root, data5);
-    insertNode(&root, data6);
-    insertNode(&root, data7);
-    
-    printf("PreOrder Traversal:\n");
-    traverse(root, printNode, PREORDER);
-    printf("\n");
-    
-    deleteNode(&root, data5);
-    
-    printf("PreOrder Traversal after deletion:\n");
-    traverse(root, printNode, PREORDER);
-    printf("\n");
-    
-    freeRBTree(root);
-    
-    return 0;
+
+// Getting minimum node
+RBNode *getMinNode(RBNode *root) {
+    if (root == NULL) return NULL;
+    while (root->left != NULL) {
+        root = root->left;
+    }
+    return root;
 }

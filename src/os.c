@@ -1,4 +1,3 @@
-
 #include "cpu.h"
 #include "timer.h"
 #include "sched.h"
@@ -9,6 +8,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
+#ifdef CFS_SCHED
+#include <time.h>
+#endif
 
 static int time_slot;
 static int num_cpus;
@@ -43,6 +46,62 @@ struct cpu_args {
 	int id;
 };
 
+#ifdef CFS_SCHED
+static clock_t start_time;
+
+/* Function to calculate actual execution time */
+static uint32_t calculate_exec_time() {
+    clock_t end_time = clock();
+    uint32_t exec_time = (uint32_t)((end_time - start_time) * 1000 / CLOCKS_PER_SEC); // Convert to milliseconds
+    start_time = end_time; // Reset start time for next calculation
+    return exec_time;
+}
+
+/* Modified CPU routine for CFS */
+static void * cfs_cpu_routine(void * args) {
+    struct timer_id_t * timer_id = ((struct cpu_args*)args)->timer_id;
+    int id = ((struct cpu_args*)args)->id;
+    struct pcb_t * proc = NULL;
+
+    while (1) {
+        if (proc == NULL) {
+            proc = get_proc();
+            if (proc == NULL) {
+                next_slot(timer_id);
+                continue;
+            }
+        } else if (proc->pc == proc->code->size) {
+            printf("\tCPU %d: Process %2d has finished\n", id, proc->pid);
+            free(proc);
+            proc = get_proc();
+        }
+
+        if (proc == NULL && done) {
+            printf("\tCPU %d stopped\n", id);
+            break;
+        } else if (proc == NULL) {
+            next_slot(timer_id);
+            continue;
+        }
+
+        printf("\tCPU %d: Dispatched process %2d\n", id, proc->pid);
+        start_time = clock(); // Start tracking execution time
+
+        run(proc);
+
+        uint32_t exec_time = calculate_exec_time();
+        update_vruntime(proc, exec_time); // Update vruntime based on actual execution time
+
+        put_proc(proc);
+        proc = get_proc();
+
+        next_slot(timer_id);
+    }
+
+    detach_event(timer_id);
+    pthread_exit(NULL);
+}
+#endif
 
 static void * cpu_routine(void * args) {
 	struct timer_id_t * timer_id = ((struct cpu_args*)args)->timer_id;
@@ -254,10 +313,17 @@ int main(int argc, char * argv[]) {
 #else
 	pthread_create(&ld, NULL, ld_routine, (void*)ld_event);
 #endif
+#ifdef CFS_SCHED
+	for (i = 0; i < num_cpus; i++) {
+		pthread_create(&cpu[i], NULL,
+			cfs_cpu_routine, (void*)&args[i]);
+	}
+#else
 	for (i = 0; i < num_cpus; i++) {
 		pthread_create(&cpu[i], NULL,
 			cpu_routine, (void*)&args[i]);
 	}
+#endif
 
 	/* Wait for CPU and loader finishing */
 	for (i = 0; i < num_cpus; i++) {

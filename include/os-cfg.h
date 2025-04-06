@@ -2,6 +2,7 @@
 #define OSCFG_H
 
 #define MLQ_SCHED 1
+#define CFS_SCHED 2
 #define MAX_PRIO 140
 
 #define MM_PAGING

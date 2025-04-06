@@ -1,5 +1,6 @@
 
 #include "queue.h"
+#include "../include/RBTree.h"
 #include "sched.h"
 #include <pthread.h>
 
@@ -15,6 +16,134 @@ static struct queue_t mlq_ready_queue[MAX_PRIO];
 static int slot[MAX_PRIO];
 #endif
 
+#ifdef CFS_SCHED
+#include "RBTree.h"
+
+static RBNode *cfs_ready_tree; 
+
+uint32_t total_weight = 0;
+void accumulate_weight(RBNode *node) {
+    if (node != NULL) {
+        uint32_t weight = node->data->proc->weight;
+        total_weight += weight;
+    }
+}
+
+/* Calculate total weight of all processes in the tree */
+uint32_t calculate_total_weight() {
+    total_weight = 0; 
+    if (cfs_ready_tree != NULL) {
+        traverse(cfs_ready_tree, accumulate_weight, PREORDER);
+    }
+    return total_weight;
+}
+
+/* Calculate process weight based on its priority */
+uint32_t calculate_process_weight(struct pcb_t *proc) {
+    int niceness = -proc->priority;  
+    uint32_t weight = 1024 * (1 << (-niceness / 10)); 
+    return weight;
+}
+
+/* Calculate time slice based on process weight and system load */
+uint32_t calculate_time_slice(struct pcb_t *proc) {
+    const uint32_t target_latency = 20;    
+    uint32_t weight = proc->weight;
+    
+    uint32_t total_weight = calculate_total_weight();
+    if (total_weight == 0) total_weight = weight; 
+    
+    uint32_t time_slice = (weight * target_latency) / total_weight;
+    if (time_slice == 0) time_slice = 1;
+    
+    return time_slice;
+}
+
+void re_calculate_time_slice(RBNode *node) {
+	if (node != NULL) {
+		struct pcb_t *proc = node->data->proc;
+		proc->time_slice = calculate_time_slice(proc);
+	}
+}
+
+/* Update vruntime of the process */
+void update_vruntime(struct pcb_t *proc, uint32_t exec_time) {
+	uint32_t weight = proc->weight;
+	proc->vruntime += exec_time / weight;
+}
+
+struct pcb_t *get_cfs_proc(void) {
+    pthread_mutex_lock(&queue_lock);
+    
+    if (cfs_ready_tree == NULL) {
+        pthread_mutex_unlock(&queue_lock);
+        return NULL; 
+    }
+
+    RBNode *minNode = getMinNode(cfs_ready_tree);
+    struct pcb_t *proc = minNode->data->proc;    
+    deleteNode(&cfs_ready_tree, minNode->data);
+    
+    enqueue(&running_list, proc);
+    
+    pthread_mutex_unlock(&queue_lock);
+    return proc;
+}
+
+void put_cfs_proc(struct pcb_t *proc) {
+    pthread_mutex_lock(&queue_lock);
+    
+    proc->time_slice = calculate_time_slice(proc);
+    
+    proc->ready_queue = &ready_queue;
+    proc->running_list = &running_list;
+    
+    Dtype *data = createDtype(proc);
+    insertNode(&cfs_ready_tree, data);
+    
+    pthread_mutex_unlock(&queue_lock);
+}
+
+/* Initial insertion */
+void add_cfs_proc(struct pcb_t *proc) {
+    pthread_mutex_lock(&queue_lock);
+    
+    proc->vruntime = getMinNode(cfs_ready_tree)->data->proc->vruntime;
+	proc->weight = calculate_process_weight(proc);
+    proc->time_slice = calculate_time_slice(proc);
+
+	// Recalculate time slice for all processes in the tree
+	traverse(cfs_ready_tree, re_calculate_time_slice, PREORDER);
+    
+    proc->ready_queue = &ready_queue;
+    proc->running_list = &running_list;
+    
+    Dtype *data = createDtype(proc);
+    insertNode(&cfs_ready_tree, data);
+    
+    pthread_mutex_unlock(&queue_lock);
+}
+
+struct pcb_t * get_proc(void) {
+    return get_cfs_proc();
+}
+
+void put_proc(struct pcb_t * proc) {
+    put_cfs_proc(proc);
+}
+
+void add_proc(struct pcb_t * proc) {
+    add_cfs_proc(proc);
+}
+
+void init_scheduler(void) {
+    ready_queue.size = 0;
+    running_list.size = 0;
+    pthread_mutex_init(&queue_lock, NULL);
+    cfs_ready_tree = NULL; // Initialize the RB-tree to NULL
+}
+#endif
+
 int queue_empty(void) {
 #ifdef MLQ_SCHED
 	unsigned long prio;
@@ -25,6 +154,7 @@ int queue_empty(void) {
 	return (empty(&ready_queue) && empty(&run_queue));
 }
 
+#ifndef CFS_SCHED
 void init_scheduler(void) {
 #ifdef MLQ_SCHED
     int i ;
@@ -38,6 +168,7 @@ void init_scheduler(void) {
 	run_queue.size = 0;
 	pthread_mutex_init(&queue_lock, NULL);
 }
+#endif
 
 #ifdef MLQ_SCHED
 /* 
@@ -91,6 +222,7 @@ void add_proc(struct pcb_t * proc) {
 	return add_mlq_proc(proc);
 }
 #else
+#ifndef CFS_SCHED
 struct pcb_t * get_proc(void) {
 	struct pcb_t * proc = NULL;
 	/*TODO: get a process from [ready_queue].
@@ -120,6 +252,7 @@ void add_proc(struct pcb_t * proc) {
 	enqueue(&ready_queue, proc);
 	pthread_mutex_unlock(&queue_lock);	
 }
+#endif
 #endif
 
 
