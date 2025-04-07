@@ -84,17 +84,33 @@ static void * cfs_cpu_routine(void * args) {
             continue;
         }
 
-        printf("\tCPU %d: Dispatched process %2d\n", id, proc->pid);
-        start_time = clock(); // Start tracking execution time
+        // Convert time_slice to instruction count - scaling factor can be adjusted
+        int instruction_quota = proc->time_slice;
+        
+        printf("\tCPU %d: Dispatched process %2d with instruction quota %d\n", 
+               id, proc->pid, instruction_quota);
+        
+        int executed_instructions = 0;
+        
+        // Run process for its instruction quota or until completion
+        while (executed_instructions < instruction_quota && proc->pc < proc->code->size) {
+            // Execute one instruction
+            run(proc);
+            executed_instructions++;
+        }
+        
+        // Instead of calculating actual elapsed time, use instruction count as proxy
+        uint32_t exec_time = executed_instructions;
+        
+        // Update virtual runtime based on executed instructions and process weight
+        update_vruntime(proc, exec_time);
+        
+        // Check if process completed or was preempted
+        if (proc->pc < proc->code->size) {
+			put_proc(proc);
+		}
 
-        run(proc);
-
-        uint32_t exec_time = calculate_exec_time();
-        update_vruntime(proc, exec_time); // Update vruntime based on actual execution time
-
-        put_proc(proc);
-        proc = get_proc();
-
+		proc = get_proc();
         next_slot(timer_id);
     }
 
@@ -120,7 +136,7 @@ static void * cpu_routine(void * args) {
                            continue; /* First load failed. skip dummy load */
                         }
 		}else if (proc->pc == proc->code->size) {
-			/* The porcess has finish it job */
+			/* The process has finish it job */
 			printf("\tCPU %d: Processed %2d has finished\n",
 				id ,proc->pid);
 			free(proc);

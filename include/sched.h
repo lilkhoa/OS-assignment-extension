@@ -28,7 +28,6 @@ void put_proc(struct pcb_t * proc);
 void add_proc(struct pcb_t * proc);
 
 #ifdef CFS_SCHED
-uint32_t calculate_process_weight(struct pcb_t *proc);
 void update_vruntime(struct pcb_t * proc, uint32_t exec_time);
 #endif
 
