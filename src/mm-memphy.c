@@ -1,3 +1,4 @@
+
 // #ifdef MM_PAGING
 /*
  * PAGING based Memory Management
@@ -158,16 +159,16 @@
     return 0;
  }
  
- int MEMPHY_dump(struct memphy_struct *mp)
- {
-   /*TODO dump memphy contnt mp->storage
-    *     for tracing the memory content
-    */
-    for (int i = 0; i < mp->maxsz; ++i) {
-       if (mp->storage[i] != 0) {
-          printf("%d\n", mp->storage[i]);
+ int MEMPHY_dump(struct memphy_struct *mp) {
+    printf("===== PHYSICAL MEMORY DUMP =====\n");
+    for (int i = 0; i < mp->maxsz; ++i)
+    {
+       if (mp->storage[i] != 0)
+       {
+          printf("BYTE %08d: %d\n", i, mp->storage[i]);
        }
     }
+    printf("===== PHYSICAL MEMORY END-DUMP =====\n");
     return 0;
  }
  
@@ -204,3 +205,4 @@
  }
  
  // #endif
+ 

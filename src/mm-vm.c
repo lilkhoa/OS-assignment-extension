@@ -1,3 +1,4 @@
+
 // #ifdef MM_PAGING
 /*
  * PAGING based Memory Management
@@ -113,6 +114,7 @@
   */
  int inc_vma_limit(struct pcb_t *caller, int vmaid, int inc_sz)
  {
+   printf("Called inc_vma_limit\n");
    struct vm_rg_struct * newrg = malloc(sizeof(struct vm_rg_struct));
    int inc_amt = PAGING_PAGE_ALIGNSZ(inc_sz);
    int incnumpage =  inc_amt / PAGING_PAGESZ;
@@ -128,7 +130,7 @@
      }
      return -1; // Failed to get area or vma
    }
-   int old_end = cur_vma->vm_end;
+  //  int old_end = cur_vma->vm_end;
  
    /*Validate overlap of obtained region */
    if (validate_overlap_vm_area(caller, vmaid, area->rg_start, area->rg_end) < 0) {
@@ -146,7 +148,7 @@
    cur_vma->sbrk = area->rg_end;
  
    int inc_limit_ret = vm_map_ram(caller, area->rg_start, 
-     area->rg_end, old_end, incnumpage, newrg);
+     area->rg_end, area->rg_start, incnumpage, newrg);
  
    free(area); // Free the temporary area struct
    

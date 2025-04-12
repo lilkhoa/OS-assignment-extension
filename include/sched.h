@@ -3,9 +3,9 @@
 
 #include "common.h"
 
-#ifndef MLQ_SCHED
-#define MLQ_SCHED
-#endif
+// #ifndef MLQ_SCHED
+// #define MLQ_SCHED
+// #endif
 
 #ifndef CFS_SCHED
 #define CFS_SCHED
@@ -29,6 +29,10 @@ void add_proc(struct pcb_t * proc);
 
 #ifdef CFS_SCHED
 void update_vruntime(struct pcb_t * proc, uint32_t exec_time);
+#endif
+
+#ifdef CFS_SCHED
+uint32_t get_min_vruntime(void);
 #endif
 
 #endif

@@ -23,7 +23,11 @@ Dtype *createDtype(struct pcb_t *proc) {
         exit(EXIT_FAILURE);
     }
     data->proc = proc;
-    data->key = proc->vruntime; 
+#ifdef CFS_SCHED
+    data->key = proc->vruntime;
+#else
+    data->key = proc->prio; 
+#endif
     return data;
 }
 

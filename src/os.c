@@ -38,6 +38,9 @@ static struct ld_args{
 #ifdef MLQ_SCHED
 	unsigned long * prio;
 #endif
+#ifdef CFS_SCHED
+    int * niceness;  // Add this field for CFS weight values
+#endif
 } ld_processes;
 int num_processes;
 
@@ -49,71 +52,93 @@ struct cpu_args {
 #ifdef CFS_SCHED
 static clock_t start_time;
 
-/* Function to calculate actual execution time */
-static uint32_t calculate_exec_time() {
-    clock_t end_time = clock();
-    uint32_t exec_time = (uint32_t)((end_time - start_time) * 1000 / CLOCKS_PER_SEC); // Convert to milliseconds
-    start_time = end_time; // Reset start time for next calculation
-    return exec_time;
-}
 
 /* Modified CPU routine for CFS */
 static void * cfs_cpu_routine(void * args) {
     struct timer_id_t * timer_id = ((struct cpu_args*)args)->timer_id;
     int id = ((struct cpu_args*)args)->id;
     struct pcb_t * proc = NULL;
-
+    struct pcb_t * prev_proc = NULL;
+    uint32_t min_vruntime_at_dispatch = 0;
+    
     while (1) {
+        /* Get a process to run - this will be the one with lowest vruntime */
+        prev_proc = proc;
+
+        /* If we got a new process, record the minimum vruntime at dispatch time */
+        if (proc != NULL && proc != prev_proc) {
+            min_vruntime_at_dispatch = proc->vruntime;
+        }
+        
+        /* Handle process state */
         if (proc == NULL) {
-            proc = get_proc();
-            if (proc == NULL) {
-                next_slot(timer_id);
-                continue;
+            if (done) {
+                printf("\tCPU %d stopped\n", id);
+                break;
             }
+			proc = get_proc();
+			if (proc == NULL) {
+				next_slot(timer_id);
+				continue;
+			}
         } else if (proc->pc == proc->code->size) {
+            /* Process completed */
             printf("\tCPU %d: Process %2d has finished\n", id, proc->pid);
             free(proc);
-            proc = get_proc();
-        }
-
-        if (proc == NULL && done) {
-            printf("\tCPU %d stopped\n", id);
-            break;
-        } else if (proc == NULL) {
-            next_slot(timer_id);
+            proc = NULL;
             continue;
         }
-
-        // Convert time_slice to instruction count - scaling factor can be adjusted
-        int instruction_quota = proc->time_slice;
         
-        printf("\tCPU %d: Dispatched process %2d with instruction quota %d\n", 
-               id, proc->pid, instruction_quota);
+        printf("\tCPU %d: Dispatched process %2d with time slice %d\n", 
+               id, proc->pid, proc->time_slice);
         
-        int executed_instructions = 0;
+        int executed = 0;
+        int max_execute = proc->time_slice;
+        int preempted = 0;
         
-        // Run process for its instruction quota or until completion
-        while (executed_instructions < instruction_quota && proc->pc < proc->code->size) {
-            // Execute one instruction
+        /* Run the process for a while, checking for preemption */
+        while (executed < max_execute && proc->pc < proc->code->size) {
+            /* Execute one instruction */
             run(proc);
-            executed_instructions++;
+            executed++;
+            
+            /* After each instruction, check if we need to preempt */
+            if (executed % 2 == 0) {  // Check preemption every 5 instructions
+                /* Check if there's a process with lower vruntime in the queue */
+                uint32_t current_min_vruntime = get_min_vruntime();
+                
+                /* If a process with lower vruntime has entered the queue, preempt */
+                if (current_min_vruntime < min_vruntime_at_dispatch) {
+                    printf("\tCPU %d: Preempting process %2d - lower vruntime process available\n",
+                           id, proc->pid);
+                    preempted = 1;
+                    break;
+                }
+            }
+            
+            next_slot(timer_id);
         }
         
-        // Instead of calculating actual elapsed time, use instruction count as proxy
-        uint32_t exec_time = executed_instructions;
+        /* Update vruntime based on actual execution time */
+        update_vruntime(proc, executed);
         
-        // Update virtual runtime based on executed instructions and process weight
-        update_vruntime(proc, exec_time);
-        
-        // Check if process completed or was preempted
+        /* Process didn't finish, put it back in the queue */
         if (proc->pc < proc->code->size) {
-			put_proc(proc);
-		}
+            if (preempted) {
+                printf("\tCPU %d: Process %2d preempted after %d instructions\n", 
+                       id, proc->pid, executed);
+            } else {
+                printf("\tCPU %d: Process %2d used its time slice (%d)\n", 
+                       id, proc->pid, executed);
+            }
+            
+            put_proc(proc);
+			proc = get_proc();
+        }
 
-		proc = get_proc();
-        next_slot(timer_id);
+		next_slot(timer_id);
     }
-
+    
     detach_event(timer_id);
     pthread_exit(NULL);
 }
@@ -177,42 +202,58 @@ static void * cpu_routine(void * args) {
 
 static void * ld_routine(void * args) {
 #ifdef MM_PAGING
-	struct memphy_struct* mram = ((struct mmpaging_ld_args *)args)->mram;
-	struct memphy_struct** mswp = ((struct mmpaging_ld_args *)args)->mswp;
-	struct memphy_struct* active_mswp = ((struct mmpaging_ld_args *)args)->active_mswp;
-	struct timer_id_t * timer_id = ((struct mmpaging_ld_args *)args)->timer_id;
+    struct memphy_struct* mram = ((struct mmpaging_ld_args *)args)->mram;
+    struct memphy_struct** mswp = ((struct mmpaging_ld_args *)args)->mswp;
+    struct memphy_struct* active_mswp = ((struct mmpaging_ld_args *)args)->active_mswp;
+    struct timer_id_t * timer_id = ((struct mmpaging_ld_args *)args)->timer_id;
 #else
-	struct timer_id_t * timer_id = (struct timer_id_t*)args;
+    struct timer_id_t * timer_id = (struct timer_id_t*)args;
 #endif
-	int i = 0;
-	printf("ld_routine\n");
-	while (i < num_processes) {
-		struct pcb_t * proc = load(ld_processes.path[i]);
+    int i = 0;
+    printf("ld_routine\n");
+    while (i < num_processes) {
+        struct pcb_t * proc = load(ld_processes.path[i]);
 #ifdef MLQ_SCHED
-		proc->prio = ld_processes.prio[i];
+        proc->prio = ld_processes.prio[i];
 #endif
-		while (current_time() < ld_processes.start_time[i]) {
-			next_slot(timer_id);
-		}
+#ifdef CFS_SCHED
+        // Initialize CFS scheduler specific fields
+        proc->niceness = ld_processes.niceness[i]; // Default niceness
+#endif
+        while (current_time() < ld_processes.start_time[i]) {
+            next_slot(timer_id);
+        }
 #ifdef MM_PAGING
-		proc->mm = malloc(sizeof(struct mm_struct));
-		init_mm(proc->mm, proc);
-		proc->mram = mram;
-		proc->mswp = mswp;
-		proc->active_mswp = active_mswp;
+        proc->mm = malloc(sizeof(struct mm_struct));
+        init_mm(proc->mm, proc);
+        proc->mram = mram;
+        proc->mswp = mswp;
+        proc->active_mswp = active_mswp;
 #endif
-		printf("\tLoaded a process at %s, PID: %d PRIO: %ld\n",
-			ld_processes.path[i], proc->pid, ld_processes.prio[i]);
-		add_proc(proc);
-		free(ld_processes.path[i]);
-		i++;
-		next_slot(timer_id);
-	}
-	free(ld_processes.path);
-	free(ld_processes.start_time);
-	done = 1;
-	detach_event(timer_id);
-	pthread_exit(NULL);
+        printf("\tLoaded a process at %s, PID: %d", ld_processes.path[i], proc->pid);
+#ifdef MLQ_SCHED
+        printf(" PRIO: %ld", ld_processes.prio[i]);
+#endif
+#ifdef CFS_SCHED
+        printf(" NICENESS: %d", ld_processes.niceness[i]);
+#endif
+        printf("\n");
+        add_proc(proc);
+        free(ld_processes.path[i]);
+        i++;
+        next_slot(timer_id);
+    }
+    free(ld_processes.path);
+    free(ld_processes.start_time);
+#ifdef MLQ_SCHED
+    free(ld_processes.prio);
+#endif
+#ifdef CFS_SCHED
+	free(ld_processes.niceness);
+#endif
+    done = 1;
+    detach_event(timer_id);
+    pthread_exit(NULL);
 }
 
 static void read_config(const char * path) {
@@ -254,6 +295,10 @@ static void read_config(const char * path) {
 	ld_processes.prio = (unsigned long*)
 		malloc(sizeof(unsigned long) * num_processes);
 #endif
+#ifdef CFS_SCHED
+	ld_processes.niceness = (int*)
+		malloc(sizeof(int) * num_processes);
+#endif
 	int i;
 	for (i = 0; i < num_processes; i++) {
 		ld_processes.path[i] = (char*)malloc(sizeof(char) * 100);
@@ -262,8 +307,9 @@ static void read_config(const char * path) {
 		char proc[100];
 #ifdef MLQ_SCHED
 		fscanf(file, "%lu %s %lu\n", &ld_processes.start_time[i], proc, &ld_processes.prio[i]);
-#else
-		fscanf(file, "%lu %s\n", &ld_processes.start_time[i], proc);
+#endif
+#ifdef CFS_SCHED
+		fscanf(file, "%lu %s %d\n", &ld_processes.start_time[i], proc, &ld_processes.niceness[i]);
 #endif
 		strcat(ld_processes.path[i], proc);
 	}

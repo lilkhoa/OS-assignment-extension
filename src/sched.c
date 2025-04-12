@@ -17,6 +17,7 @@ static int slot[MAX_PRIO];
 
 #ifdef CFS_SCHED
 #include "../include/RBTree.h"
+#define VRUNTIME_SCALE 1000
 
 static RBNode *cfs_ready_tree; 
 
@@ -37,16 +38,16 @@ uint32_t calculate_total_weight() {
     return total_weight;
 }
 
-/* Calculate process weight based on its priority */
+/* Calculate process weight based on its niceness */
 uint32_t calculate_process_weight(struct pcb_t *proc) {
-    int niceness = proc->priority;
+    int niceness = proc->niceness;
     uint32_t weight = 1024 * (1 << (-niceness / 10));
     return weight;
 }
 
 /* Calculate time slice based on process weight and system load */
 uint32_t calculate_time_slice(struct pcb_t *proc) {
-    const uint32_t target_latency = 20;    
+    const uint32_t target_latency = 2;    
     uint32_t weight = proc->weight;
     
     uint32_t total_weight = calculate_total_weight();
@@ -68,7 +69,29 @@ void re_calculate_time_slice(RBNode *node) {
 /* Update vruntime of the process */
 void update_vruntime(struct pcb_t *proc, uint32_t exec_time) {
 	uint32_t weight = proc->weight;
-	proc->vruntime += exec_time / weight;
+    
+    // Scale exec_time to prevent losing precision in integer division
+    uint64_t scaled_exec_time = (uint64_t)exec_time * VRUNTIME_SCALE;
+    
+    // Calculate scaled vruntime delta
+    uint32_t vruntime_delta = scaled_exec_time / weight;
+    
+    // Ensure a minimum vruntime increment even for very short executions
+    if (vruntime_delta == 0) {
+        vruntime_delta = 1;
+    }
+    
+    proc->vruntime += vruntime_delta;
+}
+
+/* Get the minimum vruntime from the tree */
+uint32_t get_min_vruntime(void) {
+	if (cfs_ready_tree == NULL) {
+		return 0; 
+	}
+	
+	RBNode *minNode = getMinNode(cfs_ready_tree);
+	return minNode->data->key;
 }
 
 struct pcb_t *get_cfs_proc(void) {
@@ -99,7 +122,9 @@ void put_cfs_proc(struct pcb_t *proc) {
     
     Dtype *data = createDtype(proc);
     insertNode(&cfs_ready_tree, data);
-    
+
+	traverse(cfs_ready_tree, re_calculate_time_slice, PREORDER);
+
     pthread_mutex_unlock(&queue_lock);
 }
 
@@ -183,11 +208,15 @@ void init_scheduler(void) {
 struct pcb_t *get_mlq_proc(void)
 {
 	struct pcb_t *proc = NULL;
-	/*TODO: get a process from PRIORITY [ready_queue].
-	 * Remember to use lock to protect the queue.
-	 * */
 	pthread_mutex_lock(&queue_lock);
 
+	//fix all slot equal 0
+	if(slot[MAX_PRIO-1] == 0){
+		for (int i = 0; i < MAX_PRIO; i++)
+		{
+			slot[i] = MAX_PRIO - i;
+		}
+	}
 	for (int prio = 0; prio < MAX_PRIO; prio++)
 	{
 		if (!empty(&mlq_ready_queue[prio]) && slot[prio] > 0)
@@ -197,6 +226,7 @@ struct pcb_t *get_mlq_proc(void)
 			break;
 		}
 	}
+
 	pthread_mutex_unlock(&queue_lock);
 	return proc;
 }
@@ -244,7 +274,6 @@ void add_proc(struct pcb_t *proc)
 	pthread_mutex_lock(&queue_lock);
 	enqueue(&running_list, proc);
 	pthread_mutex_unlock(&queue_lock);
-	
 	add_mlq_proc(proc);
 }
 #else

@@ -91,6 +91,7 @@ struct pcb_t
 	uint32_t prio;
 #endif
 #ifdef CFS_SCHED
+	uint32_t niceness;
 	uint32_t vruntime; 
 	uint32_t weight; 
 	uint32_t time_slice;
