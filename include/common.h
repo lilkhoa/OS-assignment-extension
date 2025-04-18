@@ -93,8 +93,8 @@ struct pcb_t
 #ifdef CFS_SCHED
 	struct RBNode *cfs_ready_tree; // CFS ready tree
 	uint32_t niceness;
-	uint32_t vruntime; 
-	uint32_t weight; 
+	double vruntime; 
+	double weight; 
 	uint32_t time_slice;
 #endif
 #ifdef MM_PAGING

@@ -5,6 +5,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 static struct queue_t ready_queue;
 static struct queue_t run_queue;
 static pthread_mutex_t queue_lock;
@@ -23,16 +24,16 @@ static int slot[MAX_PRIO];
 static RBNode *cfs_ready_tree; 
 static int timestamp;
 
-uint32_t total_weight = 0;
+double total_weight = 0;
 void accumulate_weight(RBNode *node) {
     if (node != NULL) {
-        uint32_t weight = node->data->proc->weight;
+        double weight = node->data->proc->weight;
         total_weight += weight;
     }
 }
 
 /* Calculate total weight of all processes in the tree */
-uint32_t calculate_total_weight() {
+double calculate_total_weight() {
     total_weight = 0; 
     if (cfs_ready_tree != NULL) {
         Traverse(cfs_ready_tree, accumulate_weight, PREORDER);
@@ -41,18 +42,18 @@ uint32_t calculate_total_weight() {
 }
 
 /* Calculate process weight based on its niceness */
-uint32_t calculate_process_weight(struct pcb_t *proc) {
+double calculate_process_weight(struct pcb_t *proc) {
     int niceness = proc->niceness;
-    uint32_t weight = 1024 * (1 << (-niceness / 10));
+    double weight = 1024 * pow(2, (-niceness / 10.0));
     return weight;
 }
 
 /* Calculate time slice based on process weight and system load */
 uint32_t calculate_time_slice(struct pcb_t *proc) {
     const uint32_t target_latency = 2;
-    uint32_t weight = proc->weight;
+    double weight = proc->weight;
     
-    uint32_t total_weight = calculate_total_weight();
+    double total_weight = calculate_total_weight();
     if (total_weight == 0) total_weight = weight; 
     
     uint32_t time_slice = (weight * target_latency) / total_weight;
@@ -70,13 +71,13 @@ void re_calculate_time_slice(RBNode *node) {
 
 /* Update vruntime of the process */
 void update_vruntime(struct pcb_t *proc, uint32_t exec_time) {
-	uint32_t weight = proc->weight;
+	double weight = proc->weight;
     
     // Scale exec_time to prevent losing precision in integer division
     uint64_t scaled_exec_time = (uint64_t)exec_time * VRUNTIME_SCALE;
     
     // Calculate scaled vruntime delta
-    uint32_t vruntime_delta = scaled_exec_time / weight;
+    double vruntime_delta = (double)scaled_exec_time / weight;
     
     // Ensure a minimum vruntime increment even for very short executions
     if (vruntime_delta == 0) {

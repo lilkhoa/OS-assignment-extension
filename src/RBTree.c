@@ -218,7 +218,7 @@ void insertFixup(RBNode **root, RBNode *z) {
 void deleteNode(RBNode **root, Dtype *data) {
     RBNode *del_node = findNode(*root, data);
     if (!del_node) {
-        fprintf(stderr, "Node with key %d not found.\n", data->key);
+        fprintf(stderr, "Node with key %f not found.\n", data->key);
         return;
     }
     
@@ -396,7 +396,7 @@ void Traverse(RBNode *root, void (*visit)(RBNode *node), enum Traversal order) {
 
 void printNode(RBNode *node) {
     if (!node) return;
-    printf("%d", node->data->key);
+    printf("%f", node->data->key);
     printf("%s", node->color == RED ? "R" : "B");
     printf(" ");
 }

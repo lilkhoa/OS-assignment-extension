@@ -17,7 +17,7 @@ enum Traversal {
 
 typedef struct Dtype { // abstract data type, representing pcb_t
     struct pcb_t *proc; // pointer to the process control block
-    int key; // key for comparison
+    double key; // key for comparison
     int timestamp;
 } Dtype;
 

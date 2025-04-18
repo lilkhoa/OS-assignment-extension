@@ -73,7 +73,7 @@ static void * cfs_cpu_routine(void * args) {
             }
         } else if (proc->pc == proc->code->size) {
             /* The process has finished its job */
-            printf("\tCPU %d: Processed %2d has finished (niceness: %d, vruntime: %u)\n",
+            printf("\tCPU %d: Processed %2d has finished (niceness: %d, vruntime: %f)\n",
                 id, proc->pid, proc->niceness, proc->vruntime);
             
             /* Update vruntime based on actual execution time */
@@ -92,7 +92,7 @@ static void * cfs_cpu_routine(void * args) {
             }
 
 			/* The process has done its job in current time slice */
-            printf("\tCPU %d: Put process %2d to run queue (niceness: %d, vruntime: %u)\n",
+            printf("\tCPU %d: Put process %2d to run queue (niceness: %d, vruntime: %f)\n",
                 id, proc->pid, proc->niceness, proc->vruntime);
             
             put_proc(proc);
@@ -110,7 +110,7 @@ static void * cfs_cpu_routine(void * args) {
             next_slot(timer_id);
             continue;
         } else if (time_left == 0) {
-            printf("\tCPU %d: Dispatched process %2d (niceness: %d, weight: %u, vruntime: %u, time_slice: %u)\n",
+            printf("\tCPU %d: Dispatched process %2d (niceness: %d, weight: %f, vruntime: %f, time_slice: %u)\n",
                 id, proc->pid, proc->niceness, proc->weight, proc->vruntime, proc->time_slice);
             
             /* Set time_left to the dynamically calculated time slice for this process */
