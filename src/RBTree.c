@@ -16,13 +16,14 @@ int compare(const Dtype *a, const Dtype *b) {
     return 0;
 }
 
-Dtype *createDtype(struct pcb_t *proc) {
+Dtype *createDtype(struct pcb_t *proc, int timestamp) {
     Dtype *data = (Dtype *)malloc(sizeof(Dtype));
     if (!data) {
         fprintf(stderr, "Memory allocation failed.\n");
         exit(EXIT_FAILURE);
     }
     data->proc = proc;
+    data->timestamp = timestamp;
 #ifdef CFS_SCHED
     data->key = proc->vruntime;
 #else
@@ -80,16 +81,23 @@ RBNode *rotateRight(RBNode *root, RBNode *y) {
 
 
 // Finding operation
+RBNode *findRec(RBNode *node, Dtype *data) {
+    if(!node) return NULL;
+    if(data->key > node->data->key)
+        return findRec(node->right,data);
+    if(data->key < node->data->key)
+        return findRec(node->left,data);
+    if(data->timestamp == node->data->timestamp) return node; //unique feature cmp
+    if(node->left) return findRec(node->left,data);
+    if(node->right) return findRec(node->right,data);
+    return NULL;
+}
+
 RBNode *findNode(RBNode *root, Dtype *data) {
-    RBNode *iter = root;
-    while (iter && compare(data, iter->data) != 0) {
-        if (compare(data, iter->data) == -1) {
-            iter = iter->left;
-        } else {
-            iter = iter->right;
-        }
+    if (root) {
+        return findRec(root, data);
     }
-    return iter;
+    return NULL;
 }
 
 
@@ -368,20 +376,20 @@ void freeRBTree(RBNode *root) {
 
 
 // Traversal operations
-void traverse(RBNode *root, void (*visit)(RBNode *node), enum Traversal order) {
+void Traverse(RBNode *root, void (*visit)(RBNode *node), enum Traversal order) {
     if (root == NULL) return;
     
     if (order == PREORDER) {
         visit(root);
-        traverse(root->left, visit, order);
-        traverse(root->right, visit, order);
+        Traverse(root->left, visit, order);
+        Traverse(root->right, visit, order);
     } else if (order == INORDER) {
-        traverse(root->left, visit, order);
+        Traverse(root->left, visit, order);
         visit(root);
-        traverse(root->right, visit, order);
+        Traverse(root->right, visit, order);
     } else if (order == POSTORDER) {
-        traverse(root->left, visit, order);
-        traverse(root->right, visit, order);
+        Traverse(root->left, visit, order);
+        Traverse(root->right, visit, order);
         visit(root);
     }
 }

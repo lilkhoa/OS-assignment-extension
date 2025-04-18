@@ -57,86 +57,72 @@ static clock_t start_time;
 static void * cfs_cpu_routine(void * args) {
     struct timer_id_t * timer_id = ((struct cpu_args*)args)->timer_id;
     int id = ((struct cpu_args*)args)->id;
+    
     struct pcb_t * proc = NULL;
-    struct pcb_t * prev_proc = NULL;
-    uint32_t min_vruntime_at_dispatch = 0;
+    uint32_t time_left = 0;
+    uint32_t executed_time = 0;
     
     while (1) {
-        /* Get a process to run - this will be the one with lowest vruntime */
-        prev_proc = proc;
-
-        /* If we got a new process, record the minimum vruntime at dispatch time */
-        if (proc != NULL && proc != prev_proc) {
-            min_vruntime_at_dispatch = proc->vruntime;
-        }
-        
-        /* Handle process state */
+        /* Check the status of current process */
         if (proc == NULL) {
-            if (done) {
-                printf("\tCPU %d stopped\n", id);
-                break;
+            /* No process is running, then we load new process from ready queue */
+            proc = get_proc();
+            if (proc == NULL) {
+                next_slot(timer_id);
+                continue; /* First load failed. skip dummy load */
             }
-			proc = get_proc();
-			if (proc == NULL) {
-				next_slot(timer_id);
-				continue;
-			}
         } else if (proc->pc == proc->code->size) {
-            /* Process completed */
-            printf("\tCPU %d: Process %2d has finished\n", id, proc->pid);
+            /* The process has finished its job */
+            printf("\tCPU %d: Processed %2d has finished (niceness: %d, vruntime: %u)\n",
+                id, proc->pid, proc->niceness, proc->vruntime);
+            
+            /* Update vruntime based on actual execution time */
+            if (executed_time > 0) {
+                update_vruntime(proc, executed_time);
+            }
+            
             free(proc);
-            proc = NULL;
-            continue;
-        }
-        
-        printf("\tCPU %d: Dispatched process %2d with time slice %d\n", 
-               id, proc->pid, proc->time_slice);
-        
-        int executed = 0;
-        int max_execute = proc->time_slice;
-        int preempted = 0;
-        
-        /* Run the process for a while, checking for preemption */
-        while (executed < max_execute && proc->pc < proc->code->size) {
-            /* Execute one instruction */
-            run(proc);
-            executed++;
-            
-            /* After each instruction, check if we need to preempt */
-            if (executed % 2 == 0) {  // Check preemption every 5 instructions
-                /* Check if there's a process with lower vruntime in the queue */
-                uint32_t current_min_vruntime = get_min_vruntime();
-                
-                /* If a process with lower vruntime has entered the queue, preempt */
-                if (current_min_vruntime < min_vruntime_at_dispatch) {
-                    printf("\tCPU %d: Preempting process %2d - lower vruntime process available\n",
-                           id, proc->pid);
-                    preempted = 1;
-                    break;
-                }
+            proc = get_proc();
+            time_left = 0;
+            executed_time = 0;
+        } else if (time_left == 0) {
+            /* Update vruntime based on actual execution time */
+            if (executed_time > 0) {
+                update_vruntime(proc, executed_time);
             }
-            
-            next_slot(timer_id);
-        }
-        
-        /* Update vruntime based on actual execution time */
-        update_vruntime(proc, executed);
-        
-        /* Process didn't finish, put it back in the queue */
-        if (proc->pc < proc->code->size) {
-            if (preempted) {
-                printf("\tCPU %d: Process %2d preempted after %d instructions\n", 
-                       id, proc->pid, executed);
-            } else {
-                printf("\tCPU %d: Process %2d used its time slice (%d)\n", 
-                       id, proc->pid, executed);
-            }
+
+			/* The process has done its job in current time slice */
+            printf("\tCPU %d: Put process %2d to run queue (niceness: %d, vruntime: %u)\n",
+                id, proc->pid, proc->niceness, proc->vruntime);
             
             put_proc(proc);
-			proc = get_proc();
+            proc = get_proc();
+            executed_time = 0;
         }
-
-		next_slot(timer_id);
+        
+        /* Recheck process status after loading new process */
+        if (proc == NULL && done) {
+            /* No process to run, exit */
+            printf("\tCPU %d stopped\n", id);
+            break;
+        } else if (proc == NULL) {
+            /* There may be new processes to run in next time slots, just skip current slot */
+            next_slot(timer_id);
+            continue;
+        } else if (time_left == 0) {
+            printf("\tCPU %d: Dispatched process %2d (niceness: %d, weight: %u, vruntime: %u, time_slice: %u)\n",
+                id, proc->pid, proc->niceness, proc->weight, proc->vruntime, proc->time_slice);
+            
+            /* Set time_left to the dynamically calculated time slice for this process */
+            time_left = proc->time_slice;
+            executed_time = 0;
+        }
+        
+        /* Run current process */
+        run(proc);
+        time_left--;
+        executed_time++;
+        next_slot(timer_id);
     }
     
     detach_event(timer_id);
@@ -217,8 +203,7 @@ static void * ld_routine(void * args) {
         proc->prio = ld_processes.prio[i];
 #endif
 #ifdef CFS_SCHED
-        // Initialize CFS scheduler specific fields
-        proc->niceness = ld_processes.niceness[i]; // Default niceness
+        proc->niceness = ld_processes.niceness[i]; 
 #endif
         while (current_time() < ld_processes.start_time[i]) {
             next_slot(timer_id);
@@ -232,10 +217,10 @@ static void * ld_routine(void * args) {
 #endif
         printf("\tLoaded a process at %s, PID: %d", ld_processes.path[i], proc->pid);
 #ifdef MLQ_SCHED
-        printf(" PRIO: %ld", ld_processes.prio[i]);
+        printf(", PRIO: %ld", ld_processes.prio[i]);
 #endif
 #ifdef CFS_SCHED
-        printf(" NICENESS: %d", ld_processes.niceness[i]);
+        printf(", NICENESS: %d", ld_processes.niceness[i]);
 #endif
         printf("\n");
         add_proc(proc);
@@ -399,6 +384,3 @@ int main(int argc, char * argv[]) {
 	return 0;
 
 }
-
-
-

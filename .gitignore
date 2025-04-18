@@ -8,3 +8,5 @@
 
 # Ignore all object files
 *.o
+
+os

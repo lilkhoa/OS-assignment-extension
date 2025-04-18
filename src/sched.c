@@ -17,9 +17,11 @@ static int slot[MAX_PRIO];
 
 #ifdef CFS_SCHED
 #include "../include/RBTree.h"
+// #include "../include/rbtree.h"
 #define VRUNTIME_SCALE 1000
 
 static RBNode *cfs_ready_tree; 
+static int timestamp;
 
 uint32_t total_weight = 0;
 void accumulate_weight(RBNode *node) {
@@ -33,7 +35,7 @@ void accumulate_weight(RBNode *node) {
 uint32_t calculate_total_weight() {
     total_weight = 0; 
     if (cfs_ready_tree != NULL) {
-        traverse(cfs_ready_tree, accumulate_weight, PREORDER);
+        Traverse(cfs_ready_tree, accumulate_weight, PREORDER);
     }
     return total_weight;
 }
@@ -47,7 +49,7 @@ uint32_t calculate_process_weight(struct pcb_t *proc) {
 
 /* Calculate time slice based on process weight and system load */
 uint32_t calculate_time_slice(struct pcb_t *proc) {
-    const uint32_t target_latency = 2;    
+    const uint32_t target_latency = 2;
     uint32_t weight = proc->weight;
     
     uint32_t total_weight = calculate_total_weight();
@@ -120,10 +122,10 @@ void put_cfs_proc(struct pcb_t *proc) {
     proc->ready_queue = &ready_queue;
     proc->running_list = &running_list;
     
-    Dtype *data = createDtype(proc);
+    Dtype *data = createDtype(proc, timestamp++);
     insertNode(&cfs_ready_tree, data);
 
-	traverse(cfs_ready_tree, re_calculate_time_slice, PREORDER);
+	Traverse(cfs_ready_tree, re_calculate_time_slice, PREORDER);
 
     pthread_mutex_unlock(&queue_lock);
 }
@@ -141,12 +143,12 @@ void add_cfs_proc(struct pcb_t *proc) {
     proc->time_slice = calculate_time_slice(proc);
 
 	// Recalculate time slice for all processes in the tree
-	traverse(cfs_ready_tree, re_calculate_time_slice, PREORDER);
+	Traverse(cfs_ready_tree, re_calculate_time_slice, PREORDER);
     
     proc->ready_queue = &ready_queue;
     proc->running_list = &running_list;
     
-    Dtype *data = createDtype(proc);
+    Dtype *data = createDtype(proc, timestamp++);
     insertNode(&cfs_ready_tree, data);
     
     pthread_mutex_unlock(&queue_lock);
@@ -157,10 +159,26 @@ struct pcb_t * get_proc(void) {
 }
 
 void put_proc(struct pcb_t * proc) {
+	proc->ready_queue = &ready_queue;
+	proc->cfs_ready_tree = cfs_ready_tree;
+	proc->running_list = &running_list;
+
+	pthread_mutex_lock(&queue_lock);
+	enqueue(&running_list, proc);
+	pthread_mutex_unlock(&queue_lock);
+
     put_cfs_proc(proc);
 }
 
 void add_proc(struct pcb_t * proc) {
+	proc->ready_queue = &ready_queue;
+	proc->cfs_ready_tree = cfs_ready_tree;
+	proc->running_list = &running_list;
+
+	pthread_mutex_lock(&queue_lock);
+	enqueue(&running_list, proc);
+	pthread_mutex_unlock(&queue_lock);
+	
     add_cfs_proc(proc);
 }
 
@@ -169,6 +187,7 @@ void init_scheduler(void) {
     running_list.size = 0;
     pthread_mutex_init(&queue_lock, NULL);
     cfs_ready_tree = NULL; // Initialize the RB-tree to NULL
+	timestamp = 0;
 }
 #endif
 

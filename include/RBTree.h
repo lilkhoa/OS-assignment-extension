@@ -18,6 +18,7 @@ enum Traversal {
 typedef struct Dtype { // abstract data type, representing pcb_t
     struct pcb_t *proc; // pointer to the process control block
     int key; // key for comparison
+    int timestamp;
 } Dtype;
 
 typedef struct RBNode {
@@ -27,7 +28,7 @@ typedef struct RBNode {
 } RBNode;
 
 int compare(const Dtype *a, const Dtype *b);
-Dtype *createDtype(struct pcb_t *proc);
+Dtype *createDtype(struct pcb_t *proc, int timestamp);
 
 // Rotation operations
 RBNode *rotateLeft(RBNode *root, RBNode *x);
@@ -54,7 +55,7 @@ void deleteFixup(RBNode **root, RBNode *x, RBNode *x_parent); // Fixup after del
 void freeRBTree(RBNode *root);
 
 // Traversal operations
-void traverse(RBNode *root, void (*visit)(RBNode *node), enum Traversal order);
+void Traverse(RBNode *root, void (*visit)(RBNode *node), enum Traversal order);
 
 // Getting minimum node
 RBNode *getMinNode(RBNode *root);
