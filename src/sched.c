@@ -18,7 +18,6 @@ static int slot[MAX_PRIO];
 
 #ifdef CFS_SCHED
 #include "../include/RBTree.h"
-// #include "../include/rbtree.h"
 #define VRUNTIME_SCALE 1000
 
 static RBNode *cfs_ready_tree; 
@@ -32,7 +31,6 @@ void accumulate_weight(RBNode *node) {
     }
 }
 
-/* Calculate total weight of all processes in the tree */
 double calculate_total_weight() {
     total_weight = 0; 
     if (cfs_ready_tree != NULL) {
@@ -41,22 +39,20 @@ double calculate_total_weight() {
     return total_weight;
 }
 
-/* Calculate process weight based on its niceness */
 double calculate_process_weight(struct pcb_t *proc) {
     int niceness = proc->niceness;
     double weight = 1024 * pow(2, (-niceness / 10.0));
     return weight;
 }
 
-/* Calculate time slice based on process weight and system load */
 uint32_t calculate_time_slice(struct pcb_t *proc) {
-    const uint32_t target_latency = 2;
+    const uint32_t target_latency = 3;
     double weight = proc->weight;
     
     double total_weight = calculate_total_weight();
     if (total_weight == 0) total_weight = weight; 
     
-    uint32_t time_slice = (weight * target_latency) / total_weight;
+    uint32_t time_slice = round((weight * target_latency) / total_weight);
     if (time_slice == 0) time_slice = 1;
     
     return time_slice;
@@ -69,17 +65,13 @@ void re_calculate_time_slice(RBNode *node) {
 	}
 }
 
-/* Update vruntime of the process */
 void update_vruntime(struct pcb_t *proc, uint32_t exec_time) {
 	double weight = proc->weight;
     
-    // Scale exec_time to prevent losing precision in integer division
     uint64_t scaled_exec_time = (uint64_t)exec_time * VRUNTIME_SCALE;
     
-    // Calculate scaled vruntime delta
     double vruntime_delta = (double)scaled_exec_time / weight;
     
-    // Ensure a minimum vruntime increment even for very short executions
     if (vruntime_delta == 0) {
         vruntime_delta = 1;
     }
@@ -87,7 +79,6 @@ void update_vruntime(struct pcb_t *proc, uint32_t exec_time) {
     proc->vruntime += vruntime_delta;
 }
 
-/* Get the minimum vruntime from the tree */
 uint32_t get_min_vruntime(void) {
 	if (cfs_ready_tree == NULL) {
 		return 0; 
@@ -106,6 +97,7 @@ struct pcb_t *get_cfs_proc(void) {
     }
 
     RBNode *minNode = getMinNode(cfs_ready_tree);
+	re_calculate_time_slice(minNode);
     struct pcb_t *proc = minNode->data->proc;
     deleteNode(&cfs_ready_tree, minNode->data);
     
@@ -187,7 +179,7 @@ void init_scheduler(void) {
     ready_queue.size = 0;
     running_list.size = 0;
     pthread_mutex_init(&queue_lock, NULL);
-    cfs_ready_tree = NULL; // Initialize the RB-tree to NULL
+    cfs_ready_tree = NULL; 
 	timestamp = 0;
 }
 #endif
