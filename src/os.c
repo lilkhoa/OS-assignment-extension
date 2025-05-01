@@ -45,6 +45,16 @@ struct cpu_args {
 	int id;
 };
 
+static struct {
+    unsigned long total_turnaround;
+    unsigned long total_wait;
+    unsigned long total_response;
+    int completed_procs;
+} scheduler_stats = {0, 0, 0, 0};
+
+void update_stats(struct pcb_t *proc);
+void print_final_stats(void);
+
 #ifdef CFS_SCHED
 static clock_t start_time;
 
@@ -68,20 +78,24 @@ static void * cfs_cpu_routine(void * args) {
                 continue; /* First load failed. skip dummy load */
             }
         } else if (proc->pc == proc->code->size) {
-            /* The process has finished its job */
-            printf("\tCPU %d: Processed %2d has finished (niceness: %d, vruntime: %f)\n",
-                id, proc->pid, proc->niceness, proc->vruntime);
-            
-            /* Update vruntime based on actual execution time */
-            if (executed_time > 0) {
-                update_vruntime(proc, executed_time);
-            }
-            
-            free(proc);
-            proc = get_proc();
-            time_left = 0;
-            executed_time = 0;
-        } else if (time_left == 0) {
+			/* The process has finished its job */
+			printf("\tCPU %d: Processed %2d has finished (niceness: %d, vruntime: %f)\n",
+				id, proc->pid, proc->niceness, proc->vruntime);
+			
+			/* Update vruntime based on actual execution time */
+			if (executed_time > 0) {
+				update_vruntime(proc, executed_time);
+			}
+			
+			// Add this line to set completion time
+			proc->last_completion = current_time();
+			
+			update_stats(proc);
+			free(proc);
+			proc = get_proc();
+			time_left = 0;
+			executed_time = 0;
+		} else if (time_left == 0) {
             /* Update vruntime based on actual execution time */
             if (executed_time > 0) {
                 update_vruntime(proc, executed_time);
@@ -106,13 +120,15 @@ static void * cfs_cpu_routine(void * args) {
             next_slot(timer_id);
             continue;
         } else if (time_left == 0) {
-            printf("\tCPU %d: Dispatched process %2d (niceness: %d, weight: %f, vruntime: %f, time_slice: %u)\n",
-                id, proc->pid, proc->niceness, proc->weight, proc->vruntime, proc->time_slice);
-            
-            /* Set time_left to the dynamically calculated time slice for this process */
-            time_left = proc->time_slice;
-            executed_time = 0;
-        }
+			printf("\tCPU %d: Dispatched process %2d (niceness: %d, weight: %f, vruntime: %f, time_slice: %u)\n",
+				id, proc->pid, proc->niceness, proc->weight, proc->vruntime, proc->time_slice);
+			
+			// Add this line to track scheduling
+			proc->times_scheduled++;
+			
+			time_left = proc->time_slice;
+			executed_time = 0;
+		}
         
         /* Run current process */
         run(proc);
@@ -195,6 +211,10 @@ static void * ld_routine(void * args) {
     printf("ld_routine\n");
     while (i < num_processes) {
         struct pcb_t * proc = load(ld_processes.path[i]);
+		// Add these lines after creating the process
+		proc->first_arrival = current_time();
+		proc->total_wait = 0;
+		proc->times_scheduled = 0;
 #ifdef MLQ_SCHED
         proc->prio = ld_processes.prio[i];
 #endif
@@ -299,6 +319,28 @@ static void read_config(const char * path) {
 	}
 }
 
+void update_stats(struct pcb_t *proc) {
+    unsigned long turnaround = proc->last_completion - proc->first_arrival;
+    scheduler_stats.total_turnaround += turnaround;
+    scheduler_stats.total_wait += proc->total_wait;
+    scheduler_stats.completed_procs++;
+    
+    printf("\nProcess %d stats:\n", proc->pid);
+    printf("  Turnaround time: %lu\n", turnaround);
+    printf("  Average wait: %f\n", (float)proc->total_wait / proc->times_scheduled);
+    printf("  Times scheduled: %d\n", proc->times_scheduled);
+}
+
+// At end of simulation
+void print_final_stats() {
+    printf("\nOverall scheduler statistics:\n");
+    printf("Average turnaround time: %f\n", 
+           (float)scheduler_stats.total_turnaround / scheduler_stats.completed_procs);
+    printf("Average waiting time: %f\n", 
+           (float)scheduler_stats.total_wait / scheduler_stats.completed_procs);
+    printf("Total processes completed: %d\n", scheduler_stats.completed_procs);
+}
+
 int main(int argc, char * argv[]) {
 	/* Read config */
 	if (argc != 2) {
@@ -379,6 +421,9 @@ int main(int argc, char * argv[]) {
 
 	/* Stop timer */
 	stop_timer();
+
+	/* Print final stats */
+	print_final_stats();
 
 	return 0;
 

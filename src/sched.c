@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include "timer.h"
 static struct queue_t ready_queue;
 static struct queue_t run_queue;
 static pthread_mutex_t queue_lock;
@@ -99,6 +100,8 @@ struct pcb_t *get_cfs_proc(void) {
 
 void put_cfs_proc(struct pcb_t *proc) {
     pthread_mutex_lock(&queue_lock);
+    
+    proc->total_wait += (current_time() - proc->first_arrival);
     
     // Don't recalculate time slice here, it will be done in get_proc
     proc->ready_queue = &ready_queue;
