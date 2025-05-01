@@ -14,8 +14,8 @@ Time slot   6
 	CPU 0: Dispatched process  2 (niceness: 10, weight: 512.000000, vruntime: 0.000000, time_slice: 1)
 Time slot   7
 	CPU 0: Put process  2 to run queue (niceness: 10, vruntime: 1.953125)
-	Loaded a process at input/proc/p3, PID: 4	CPU 0: Dispatched process  3 (niceness: 0, weight: 1024.000000, vruntime: 0.000000, time_slice: 2)
-, NICENESS: -10
+	CPU 0: Dispatched process  3 (niceness: 0, weight: 1024.000000, vruntime: 0.000000, time_slice: 2)
+	Loaded a process at input/proc/p3, PID: 4, NICENESS: -10
 Time slot   8
 Time slot   9
 	CPU 0: Put process  3 to run queue (niceness: 0, vruntime: 1.953125)
