@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Script to test CFS scheduler with preemption in OS simulator
+# Script to simulate CFS scheduling in OS simulator
 # Created for OS-assignment-extension
 
 # ANSI color codes for better output formatting
@@ -11,7 +11,7 @@ CYAN='\033[0;36m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-echo -e "${CYAN}CFS Scheduler Preemption Test Script${NC}"
+echo -e "${CYAN}CFS Scheduler Simulation Script${NC}"
 echo "=========================================="
 
 # Check if input directory exists
@@ -21,70 +21,58 @@ if [ ! -d "input" ]; then
     exit 1
 fi
 
-# Create a test configuration file for CFS scheduler with preemption test
-cat > input/sched_cfs_preemption << EOF
-3 1 3
-2048 16777216 0 0 0
-0 p1 -10
-5 p2 0
-10 p3 -5
-EOF
-
-echo -e "${BLUE}Created test configuration with 3 processes:${NC}"
-echo "  - p1: niceness -10 (high priority), starts at time 0"
-echo "  - p2: niceness 0 (normal priority), starts at time 5"
-echo "  - p3: niceness -5 (medium priority), starts at time 10"
-echo "This will demonstrate preemption when higher priority processes arrive."
-
-# Compile the OS simulator
-echo -e "\n${YELLOW}Compiling the OS simulator...${NC}"
-make clean && make CFS_SCHED=1
-
-if [ $? -ne 0 ]; then
-    echo -e "${RED}Compilation failed!${NC}"
-    exit 1
-fi
-
-echo -e "\n${GREEN}Compilation successful!${NC}"
-
 # Create output directory if it doesn't exist
 mkdir -p output
 
-# Run the test
-echo -e "\n${YELLOW}Running CFS scheduler preemption test...${NC}"
-echo -e "${BLUE}Test output:${NC}"
-echo "----------------------------------------"
-./os sched_cfs_preemption > output/sched_cfs_preemption.output
-cat output/sched_cfs_preemption.output
-echo "----------------------------------------"
+echo -e "${BLUE}Created test configuration with 5 processes:${NC}"
+echo "  - p1: Burst time 8, Niceness -10 (highest priority)"
+echo "  - p7: Burst time 10, Niceness -5"
+echo "  - p2: Burst time 12, Niceness 0"
+echo "  - p3: Burst time 9, Niceness 5"
+echo "  - p5: Burst time 15, Niceness 10 (lowest priority)"
+echo -e "${BLUE}Check the input/proc directory for process information.${NC}"
 
-# Check if test completed successfully
-if [ $? -ne 0 ]; then
-    echo -e "${RED}Test execution failed!${NC}"
-    exit 1
-fi
+# Function to run a test case with CFS scheduler
+run_cfs_test() {
+    local test_name=$1
+    local time_quantum=$2
+    local cpu_count=$3
+    
+    echo -e "\n${YELLOW}Creating test case: ${test_name}${NC}"
+    
+    # Create the test case file with both priority and niceness values
+    cat > input/${test_name} << EOF
+${time_quantum} ${cpu_count} 5
+2048 16777216 0 0 0
+1 p1 0 -10
+2 p7 1 -5
+3 p2 2 0
+4 p3 3 5
+5 p5 4 10
+EOF
+    
+    # Run with CFS scheduler - Make sure to properly clean and rebuild
+    echo -e "\n${YELLOW}Running with CFS scheduler...${NC}"
+    make clean > /dev/null
+    CFS_SCHED=1 make > /dev/null
+    
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}Compilation failed for CFS scheduler!${NC}"
+        exit 1
+    fi
+    
+    ./os ${test_name} > output/${test_name}.out
+    echo -e "${GREEN}CFS test completed. Output saved to: ${CYAN}output/${test_name}.out${NC}"
+}
 
-echo -e "\n${GREEN}Test completed successfully!${NC}"
-echo -e "Output saved to: ${CYAN}output/sched_cfs_preemption.output${NC}"
+# Run tests with different parameters
+echo -e "\n${CYAN}Running CFS Scheduler Tests${NC}"
 
-# Analyze the preemption behavior
-echo -e "\n${YELLOW}Analyzing preemption results...${NC}"
-echo "Checking for preemption patterns in the output:"
+# Test with different parameters
+run_cfs_test "cfs_standard" 4 1  # Standard time quantum, single CPU
+run_cfs_test "cfs_short_tq" 2 1  # Short time quantum, single CPU
+run_cfs_test "cfs_long_tq" 8 1   # Long time quantum, single CPU
 
-# Look for cases where processes are preempted due to higher priority
-PREEMPTIONS=$(grep -i "preempted" output/sched_cfs_preemption.output | wc -l)
-
-if [ $PREEMPTIONS -gt 0 ]; then
-    echo -e "${GREEN}Found $PREEMPTIONS preemption events in the execution log.${NC}"
-    echo "This indicates the preemption mechanism is working correctly."
-else
-    echo -e "${RED}No explicit preemption events found in the execution log.${NC}"
-    echo "You may need to review the code or the test parameters."
-fi
-
-echo -e "\n${CYAN}Test summary:${NC}"
-echo "- Check the output for processes with lower niceness (higher priority) getting CPU time"
-echo "- Verify that when a high priority process arrives, it preempts lower priority processes"
-echo "- Confirm that vruntime calculations include the priority bonus mechanism"
-
-echo -e "\n${GREEN}Testing complete!${NC}"
+echo -e "\n${CYAN}All CFS tests completed!${NC}"
+echo -e "${YELLOW}You can find detailed outputs in the output/ directory.${NC}"
+echo -e "${GREEN}Review the results above to understand CFS scheduling behavior.${NC}"

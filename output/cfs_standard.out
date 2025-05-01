@@ -1,0 +1,146 @@
+Time slot   0
+ld_routine
+Time slot   1
+	Loaded a process at input/proc/p1, PID: 1, NICENESS: -10
+Time slot   2
+	CPU 0: Dispatched process  1 (niceness: -10, weight: 2048.000000, vruntime: 0.000000, time_slice: 4)
+	Loaded a process at input/proc/p7, PID: 2, NICENESS: -5
+Time slot   3
+	Loaded a process at input/proc/p2, PID: 3, NICENESS: 0
+Time slot   4
+	Loaded a process at input/proc/p3, PID: 4, NICENESS: 5
+Time slot   5
+	Loaded a process at input/proc/p5, PID: 5, NICENESS: 10
+Time slot   6
+	CPU 0: Put process  1 to run queue (niceness: -10, vruntime: 1.953125)
+	CPU 0: Dispatched process  2 (niceness: -5, weight: 1448.154688, vruntime: 0.000000, time_slice: 1)
+Time slot   7
+	CPU 0: Put process  2 to run queue (niceness: -5, vruntime: 0.690534)
+	CPU 0: Dispatched process  3 (niceness: 0, weight: 1024.000000, vruntime: 0.000000, time_slice: 1)
+Time slot   8
+	CPU 0: Put process  3 to run queue (niceness: 0, vruntime: 0.976562)
+	CPU 0: Dispatched process  4 (niceness: 5, weight: 724.077344, vruntime: 0.000000, time_slice: 1)
+Time slot   9
+	CPU 0: Put process  4 to run queue (niceness: 5, vruntime: 1.381068)
+	CPU 0: Dispatched process  5 (niceness: 10, weight: 512.000000, vruntime: 0.000000, time_slice: 1)
+Time slot  10
+	CPU 0: Put process  5 to run queue (niceness: 10, vruntime: 1.953125)
+	CPU 0: Dispatched process  2 (niceness: -5, weight: 1448.154688, vruntime: 0.690534, time_slice: 1)
+Time slot  11
+	CPU 0: Put process  2 to run queue (niceness: -5, vruntime: 1.381068)
+	CPU 0: Dispatched process  3 (niceness: 0, weight: 1024.000000, vruntime: 0.976562, time_slice: 1)
+Time slot  12
+	CPU 0: Put process  3 to run queue (niceness: 0, vruntime: 1.953125)
+	CPU 0: Dispatched process  4 (niceness: 5, weight: 724.077344, vruntime: 1.381068, time_slice: 1)
+Time slot  13
+	CPU 0: Put process  4 to run queue (niceness: 5, vruntime: 2.762136)
+	CPU 0: Dispatched process  2 (niceness: -5, weight: 1448.154688, vruntime: 1.381068, time_slice: 1)
+Time slot  14
+	CPU 0: Put process  2 to run queue (niceness: -5, vruntime: 2.071602)
+	CPU 0: Dispatched process  1 (niceness: -10, weight: 2048.000000, vruntime: 1.953125, time_slice: 1)
+Time slot  15
+	CPU 0: Put process  1 to run queue (niceness: -10, vruntime: 2.441406)
+	CPU 0: Dispatched process  5 (niceness: 10, weight: 512.000000, vruntime: 1.953125, time_slice: 1)
+Time slot  16
+	CPU 0: Put process  5 to run queue (niceness: 10, vruntime: 3.906250)
+	CPU 0: Dispatched process  3 (niceness: 0, weight: 1024.000000, vruntime: 1.953125, time_slice: 1)
+Time slot  17
+	CPU 0: Put process  3 to run queue (niceness: 0, vruntime: 2.929688)
+	CPU 0: Dispatched process  2 (niceness: -5, weight: 1448.154688, vruntime: 2.071602, time_slice: 1)
+Time slot  18
+	CPU 0: Put process  2 to run queue (niceness: -5, vruntime: 2.762136)
+	CPU 0: Dispatched process  1 (niceness: -10, weight: 2048.000000, vruntime: 2.441406, time_slice: 1)
+Time slot  19
+	CPU 0: Put process  1 to run queue (niceness: -10, vruntime: 2.929688)
+	CPU 0: Dispatched process  4 (niceness: 5, weight: 724.077344, vruntime: 2.762136, time_slice: 1)
+Time slot  20
+	CPU 0: Put process  4 to run queue (niceness: 5, vruntime: 4.143204)
+	CPU 0: Dispatched process  2 (niceness: -5, weight: 1448.154688, vruntime: 2.762136, time_slice: 1)
+Time slot  21
+	CPU 0: Put process  2 to run queue (niceness: -5, vruntime: 3.452670)
+	CPU 0: Dispatched process  3 (niceness: 0, weight: 1024.000000, vruntime: 2.929688, time_slice: 1)
+Time slot  22
+	CPU 0: Put process  3 to run queue (niceness: 0, vruntime: 3.906250)
+	CPU 0: Dispatched process  1 (niceness: -10, weight: 2048.000000, vruntime: 2.929688, time_slice: 1)
+Time slot  23
+	CPU 0: Put process  1 to run queue (niceness: -10, vruntime: 3.417969)
+	CPU 0: Dispatched process  1 (niceness: -10, weight: 2048.000000, vruntime: 3.417969, time_slice: 1)
+Time slot  24
+	CPU 0: Processed  1 has finished (niceness: -10, vruntime: 3.417969)
+	CPU 0: Dispatched process  2 (niceness: -5, weight: 1448.154688, vruntime: 3.452670, time_slice: 2)
+Time slot  25
+Time slot  26
+	CPU 0: Put process  2 to run queue (niceness: -5, vruntime: 4.833738)
+	CPU 0: Dispatched process  5 (niceness: 10, weight: 512.000000, vruntime: 3.906250, time_slice: 1)
+Time slot  27
+	CPU 0: Put process  5 to run queue (niceness: 10, vruntime: 5.859375)
+	CPU 0: Dispatched process  3 (niceness: 0, weight: 1024.000000, vruntime: 3.906250, time_slice: 1)
+Time slot  28
+	CPU 0: Put process  3 to run queue (niceness: 0, vruntime: 4.882812)
+	CPU 0: Dispatched process  4 (niceness: 5, weight: 724.077344, vruntime: 4.143204, time_slice: 1)
+Time slot  29
+	CPU 0: Put process  4 to run queue (niceness: 5, vruntime: 5.524272)
+	CPU 0: Dispatched process  2 (niceness: -5, weight: 1448.154688, vruntime: 4.833738, time_slice: 2)
+Time slot  30
+Time slot  31
+	CPU 0: Put process  2 to run queue (niceness: -5, vruntime: 6.214806)
+	CPU 0: Dispatched process  3 (niceness: 0, weight: 1024.000000, vruntime: 4.882812, time_slice: 1)
+Time slot  32
+	CPU 0: Put process  3 to run queue (niceness: 0, vruntime: 5.859375)
+	CPU 0: Dispatched process  4 (niceness: 5, weight: 724.077344, vruntime: 5.524272, time_slice: 1)
+Time slot  33
+	CPU 0: Put process  4 to run queue (niceness: 5, vruntime: 6.905340)
+	CPU 0: Dispatched process  5 (niceness: 10, weight: 512.000000, vruntime: 5.859375, time_slice: 1)
+Time slot  34
+	CPU 0: Put process  5 to run queue (niceness: 10, vruntime: 7.812500)
+	CPU 0: Dispatched process  3 (niceness: 0, weight: 1024.000000, vruntime: 5.859375, time_slice: 1)
+Time slot  35
+	CPU 0: Put process  3 to run queue (niceness: 0, vruntime: 6.835938)
+	CPU 0: Dispatched process  2 (niceness: -5, weight: 1448.154688, vruntime: 6.214806, time_slice: 2)
+Time slot  36
+	CPU 0: Processed  2 has finished (niceness: -5, vruntime: 6.214806)
+	CPU 0: Dispatched process  3 (niceness: 0, weight: 1024.000000, vruntime: 6.835938, time_slice: 2)
+Time slot  37
+Time slot  38
+	CPU 0: Put process  3 to run queue (niceness: 0, vruntime: 8.789062)
+	CPU 0: Dispatched process  4 (niceness: 5, weight: 724.077344, vruntime: 6.905340, time_slice: 1)
+Time slot  39
+	CPU 0: Put process  4 to run queue (niceness: 5, vruntime: 8.286408)
+	CPU 0: Dispatched process  5 (niceness: 10, weight: 512.000000, vruntime: 7.812500, time_slice: 1)
+Time slot  40
+	CPU 0: Put process  5 to run queue (niceness: 10, vruntime: 9.765625)
+	CPU 0: Dispatched process  4 (niceness: 5, weight: 724.077344, vruntime: 8.286408, time_slice: 1)
+Time slot  41
+	CPU 0: Put process  4 to run queue (niceness: 5, vruntime: 9.667476)
+	CPU 0: Dispatched process  3 (niceness: 0, weight: 1024.000000, vruntime: 8.789062, time_slice: 2)
+Time slot  42
+Time slot  43
+	CPU 0: Put process  3 to run queue (niceness: 0, vruntime: 10.742188)
+	CPU 0: Dispatched process  4 (niceness: 5, weight: 724.077344, vruntime: 9.667476, time_slice: 1)
+Time slot  44
+	CPU 0: Put process  4 to run queue (niceness: 5, vruntime: 11.048543)
+	CPU 0: Dispatched process  5 (niceness: 10, weight: 512.000000, vruntime: 9.765625, time_slice: 1)
+Time slot  45
+	CPU 0: Put process  5 to run queue (niceness: 10, vruntime: 11.718750)
+	CPU 0: Dispatched process  3 (niceness: 0, weight: 1024.000000, vruntime: 10.742188, time_slice: 2)
+Time slot  46
+	CPU 0: Processed  3 has finished (niceness: 0, vruntime: 10.742188)
+	CPU 0: Dispatched process  4 (niceness: 5, weight: 724.077344, vruntime: 11.048543, time_slice: 2)
+Time slot  47
+	CPU 0: Processed  4 has finished (niceness: 5, vruntime: 11.048543)
+	CPU 0: Dispatched process  5 (niceness: 10, weight: 512.000000, vruntime: 11.718750, time_slice: 4)
+Time slot  48
+Time slot  49
+Time slot  50
+Time slot  51
+	CPU 0: Put process  5 to run queue (niceness: 10, vruntime: 19.531250)
+	CPU 0: Dispatched process  5 (niceness: 10, weight: 512.000000, vruntime: 19.531250, time_slice: 4)
+Time slot  52
+Time slot  53
+Time slot  54
+Time slot  55
+	CPU 0: Put process  5 to run queue (niceness: 10, vruntime: 27.343750)
+	CPU 0: Dispatched process  5 (niceness: 10, weight: 512.000000, vruntime: 27.343750, time_slice: 4)
+Time slot  56
+	CPU 0: Processed  5 has finished (niceness: 10, vruntime: 27.343750)
+	CPU 0 stopped
