@@ -1,4 +1,3 @@
-
 #include "../include/queue.h"
 #include "sched.h"
 #include <pthread.h>
@@ -19,6 +18,8 @@ static int slot[MAX_PRIO];
 #ifdef CFS_SCHED
 #include "../include/RBTree.h"
 #define VRUNTIME_SCALE 1000
+// Use time_slot from os.c as TARGET_LATENCY
+extern int time_slot; // This will be the TARGET_LATENCY for CFS
 
 static RBNode *cfs_ready_tree; 
 static int timestamp;
@@ -34,7 +35,7 @@ void accumulate_weight(RBNode *node) {
 double calculate_total_weight() {
     total_weight = 0; 
     if (cfs_ready_tree != NULL) {
-        Traverse(cfs_ready_tree, accumulate_weight, PREORDER);
+        traverse(cfs_ready_tree, accumulate_weight, PREORDER);
     }
     return total_weight;
 }
@@ -46,13 +47,13 @@ double calculate_process_weight(struct pcb_t *proc) {
 }
 
 uint32_t calculate_time_slice(struct pcb_t *proc) {
-    const uint32_t target_latency = 3;
+	const int TARGET_LATENCY = time_slot;
     double weight = proc->weight;
     
     double total_weight = calculate_total_weight();
     if (total_weight == 0) total_weight = weight; 
     
-    uint32_t time_slice = round((weight * target_latency) / total_weight);
+    uint32_t time_slice = round((weight * TARGET_LATENCY) / total_weight);
     if (time_slice == 0) time_slice = 1;
     
     return time_slice;
@@ -118,8 +119,7 @@ void put_cfs_proc(struct pcb_t *proc) {
     Dtype *data = createDtype(proc, timestamp++);
     insertNode(&cfs_ready_tree, data);
 
-	Traverse(cfs_ready_tree, re_calculate_time_slice, PREORDER);
-
+	traverse(cfs_ready_tree, re_calculate_time_slice, PREORDER);
     pthread_mutex_unlock(&queue_lock);
 }
 
@@ -130,13 +130,12 @@ void add_cfs_proc(struct pcb_t *proc) {
     if (getMinNode(cfs_ready_tree) == NULL) {
 		proc->vruntime = 0;
 	} else {
-		proc->vruntime = getMinNode(cfs_ready_tree)->data->proc->vruntime;
+		proc->vruntime = getMinNode(cfs_ready_tree)->data->proc->vruntime;        
 	}
 	proc->weight = calculate_process_weight(proc);
     proc->time_slice = calculate_time_slice(proc);
 
-	// Recalculate time slice for all processes in the tree
-	Traverse(cfs_ready_tree, re_calculate_time_slice, PREORDER);
+	traverse(cfs_ready_tree, re_calculate_time_slice, PREORDER);
     
     proc->ready_queue = &ready_queue;
     proc->running_list = &running_list;
@@ -211,6 +210,35 @@ void init_scheduler(void) {
 #endif
 
 #ifdef MLQ_SCHED
+void remove_from_queue(struct queue_t *q, struct pcb_t *proc){
+	if (q == NULL || q->size == 0)
+			return;
+	int idx = -1;
+	for(int i = 0;i<q->size;i++){
+			if(q->proc[i]->pid == proc->pid){
+					idx = i;
+					break;
+			}
+	}
+	if(idx == -1) return;
+	for (int i = idx; i < q->size - 1; i++)
+	{
+			q->proc[i] = q->proc[i + 1];
+	}
+	q->size--;
+}
+
+struct pcb_t * dequeue_wrapper(void* queue){ //for syscall
+	pthread_mutex_lock(&queue_lock);
+	struct pcb_t * proc = dequeue((struct queue_t*)queue);
+	pthread_mutex_unlock(&queue_lock);
+	return proc;
+}
+void enqueue_wrapper(void* queue, struct pcb_t *proc){ //for syscall
+	pthread_mutex_lock(&queue_lock);
+	enqueue((struct queue_t*)queue, proc);
+	pthread_mutex_unlock(&queue_lock);
+}
 /*
  *  Stateful design for routine calling
  *  based on the priority and our MLQ policy
@@ -238,7 +266,7 @@ struct pcb_t *get_mlq_proc(void)
 			break;
 		}
 	}
-
+	if(proc!=NULL) enqueue(&running_list, proc); //add proc to running_list
 	pthread_mutex_unlock(&queue_lock);
 	return proc;
 }

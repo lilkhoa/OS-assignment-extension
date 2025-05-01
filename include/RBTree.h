@@ -55,7 +55,7 @@ void deleteFixup(RBNode **root, RBNode *x, RBNode *x_parent); // Fixup after del
 void freeRBTree(RBNode *root);
 
 // Traversal operations
-void Traverse(RBNode *root, void (*visit)(RBNode *node), enum Traversal order);
+void traverse(RBNode *root, void (*visit)(RBNode *node), enum Traversal order);
 
 // Getting minimum node
 RBNode *getMinNode(RBNode *root);

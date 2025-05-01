@@ -376,20 +376,20 @@ void freeRBTree(RBNode *root) {
 
 
 // Traversal operations
-void Traverse(RBNode *root, void (*visit)(RBNode *node), enum Traversal order) {
+void traverse(RBNode *root, void (*visit)(RBNode *node), enum Traversal order) {
     if (root == NULL) return;
     
     if (order == PREORDER) {
         visit(root);
-        Traverse(root->left, visit, order);
-        Traverse(root->right, visit, order);
+        traverse(root->left, visit, order);
+        traverse(root->right, visit, order);
     } else if (order == INORDER) {
-        Traverse(root->left, visit, order);
+        traverse(root->left, visit, order);
         visit(root);
-        Traverse(root->right, visit, order);
+        traverse(root->right, visit, order);
     } else if (order == POSTORDER) {
-        Traverse(root->left, visit, order);
-        Traverse(root->right, visit, order);
+        traverse(root->left, visit, order);
+        traverse(root->right, visit, order);
         visit(root);
     }
 }

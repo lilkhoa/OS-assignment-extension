@@ -13,7 +13,7 @@
 #include <time.h>
 #endif
 
-static int time_slot;
+int time_slot; // Make time_slot globally accessible for CFS scheduling
 static int num_cpus;
 static int done = 0;
 
@@ -91,7 +91,7 @@ static void * cfs_cpu_routine(void * args) {
                 update_vruntime(proc, executed_time);
             }
 
-			/* The process has done its job in current time slice */
+            /* The process has done its job in current time slice or has been preempted */
             printf("\tCPU %d: Put process %2d to run queue (niceness: %d, vruntime: %f)\n",
                 id, proc->pid, proc->niceness, proc->vruntime);
             
