@@ -35,12 +35,8 @@ struct mmpaging_ld_args {
 static struct ld_args{
 	char ** path;
 	unsigned long * start_time;
-#ifdef MLQ_SCHED
-	unsigned long * prio;
-#endif
-#ifdef CFS_SCHED
-    int * niceness;  // Add this field for CFS weight values
-#endif
+	unsigned long * prio;    // Always include priority for MLQ
+	int * niceness;          // Always include niceness for CFS
 } ld_processes;
 int num_processes;
 
@@ -276,26 +272,29 @@ static void read_config(const char * path) {
 #endif
 #endif
 
-#ifdef MLQ_SCHED
-	ld_processes.prio = (unsigned long*)
-		malloc(sizeof(unsigned long) * num_processes);
-#endif
-#ifdef CFS_SCHED
-	ld_processes.niceness = (int*)
-		malloc(sizeof(int) * num_processes);
-#endif
+	// Allocate memory for both prio and niceness arrays
+	ld_processes.prio = (unsigned long*)malloc(sizeof(unsigned long) * num_processes);
+	ld_processes.niceness = (int*)malloc(sizeof(int) * num_processes);
+	
 	int i;
 	for (i = 0; i < num_processes; i++) {
 		ld_processes.path[i] = (char*)malloc(sizeof(char) * 100);
 		ld_processes.path[i][0] = '\0';
 		strcat(ld_processes.path[i], "input/proc/");
 		char proc[100];
-#ifdef MLQ_SCHED
-		fscanf(file, "%lu %s %lu\n", &ld_processes.start_time[i], proc, &ld_processes.prio[i]);
-#endif
-#ifdef CFS_SCHED
-		fscanf(file, "%lu %s %d\n", &ld_processes.start_time[i], proc, &ld_processes.niceness[i]);
-#endif
+		
+		// Try to read both priority and niceness values
+		int result = fscanf(file, "%lu %s %lu %d\n", 
+			&ld_processes.start_time[i], 
+			proc, 
+			&ld_processes.prio[i], 
+			&ld_processes.niceness[i]);
+		
+		// If we only read 3 values (no niceness), set a default niceness
+		if (result == 3) {
+			ld_processes.niceness[i] = 0; // Default niceness is 0
+		}
+		
 		strcat(ld_processes.path[i], proc);
 	}
 }
