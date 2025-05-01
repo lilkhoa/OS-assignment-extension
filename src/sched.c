@@ -14,79 +14,58 @@ static struct queue_t running_list;
 static struct queue_t mlq_ready_queue[MAX_PRIO];
 static int slot[MAX_PRIO];
 #endif
-
 #ifdef CFS_SCHED
 #include "../include/RBTree.h"
-#define VRUNTIME_SCALE 1000
-// Use time_slot from os.c as TARGET_LATENCY
-extern int time_slot; // This will be the TARGET_LATENCY for CFS
+static RBNode *cfs_ready_tree = NULL;
+static int timestamp = 0;
+static double cached_total_weight = 0;
+extern int time_slot;
+#define VRUNTIME_SCALE 1024
 
-static RBNode *cfs_ready_tree; 
-static int timestamp;
-
-double total_weight = 0;
-void accumulate_weight(RBNode *node) {
-    if (node != NULL) {
-        double weight = node->data->proc->weight;
-        total_weight += weight;
-    }
-}
-
-double calculate_total_weight() {
-    total_weight = 0; 
-    if (cfs_ready_tree != NULL) {
-        traverse(cfs_ready_tree, accumulate_weight, PREORDER);
-    }
-    return total_weight;
-}
-
+// Optimize weight calculation
 double calculate_process_weight(struct pcb_t *proc) {
     int niceness = proc->niceness;
-    double weight = 1024 * pow(2, (-niceness / 10.0));
+    // Use bit shifting for better performance
+    double weight = 1024.0;
+    if (niceness > 0) {
+        weight /= (1 << (niceness / 10));
+    } else if (niceness < 0) {
+        weight *= (1 << (-niceness / 10));
+    }
     return weight;
 }
 
-uint32_t calculate_time_slice(struct pcb_t *proc) {
-	const int TARGET_LATENCY = time_slot;
-    double weight = proc->weight;
-    
-    double total_weight = calculate_total_weight();
-    if (total_weight == 0) total_weight = weight; 
-    
-    uint32_t time_slice = round((weight * TARGET_LATENCY) / total_weight);
-    if (time_slice == 0) time_slice = 1;
-    
-    return time_slice;
+// Update total weight without extra locking
+void update_total_weight(double weight, int add) {
+    if (add) {
+        cached_total_weight += weight;
+    } else {
+        cached_total_weight -= weight;
+        if (cached_total_weight < 0) cached_total_weight = 0;
+    }
 }
 
-void re_calculate_time_slice(RBNode *node) {
-	if (node != NULL) {
-		struct pcb_t *proc = node->data->proc;
-		proc->time_slice = calculate_time_slice(proc);
-	}
+double get_total_weight(void) {
+    return cached_total_weight > 0 ? cached_total_weight : 1;
+}
+
+// Optimize time slice calculation
+uint32_t calculate_time_slice(struct pcb_t *proc) {
+    const int TARGET_LATENCY = time_slot;
+    double weight = proc->weight;
+    double total_weight = get_total_weight();
+    
+    // Ensure minimum time slice of 2 to reduce context switching
+    uint32_t time_slice = (uint32_t)((weight * TARGET_LATENCY) / total_weight);
+    return time_slice > 2 ? time_slice : 2;
 }
 
 void update_vruntime(struct pcb_t *proc, uint32_t exec_time) {
-	double weight = proc->weight;
-    
-    uint64_t scaled_exec_time = (uint64_t)exec_time * VRUNTIME_SCALE;
-    
-    double vruntime_delta = (double)scaled_exec_time / weight;
-    
-    if (vruntime_delta == 0) {
-        vruntime_delta = 1;
-    }
-    
-    proc->vruntime += vruntime_delta;
-}
-
-uint32_t get_min_vruntime(void) {
-	if (cfs_ready_tree == NULL) {
-		return 0; 
-	}
-	
-	RBNode *minNode = getMinNode(cfs_ready_tree);
-	return minNode->data->key;
+    double weight = proc->weight;
+    // Use bit shifting for multiplication
+    uint64_t scaled_exec_time = ((uint64_t)exec_time << 10);
+    uint64_t vruntime_delta = (uint64_t)(scaled_exec_time / weight);
+    proc->vruntime += (vruntime_delta > 0 ? vruntime_delta : 1);
 }
 
 struct pcb_t *get_cfs_proc(void) {
@@ -98,12 +77,20 @@ struct pcb_t *get_cfs_proc(void) {
     }
 
     RBNode *minNode = getMinNode(cfs_ready_tree);
-	re_calculate_time_slice(minNode);
+    if (!minNode) {
+        pthread_mutex_unlock(&queue_lock);
+        return NULL;
+    }
+
     struct pcb_t *proc = minNode->data->proc;
+    
+    // Calculate time slice only when getting a process
+    proc->time_slice = calculate_time_slice(proc);
+    
     deleteNode(&cfs_ready_tree, minNode->data);
+    update_total_weight(proc->weight, 0);
     
     enqueue(&running_list, proc);
-    
     pthread_mutex_unlock(&queue_lock);
     return proc;
 }
@@ -111,67 +98,40 @@ struct pcb_t *get_cfs_proc(void) {
 void put_cfs_proc(struct pcb_t *proc) {
     pthread_mutex_lock(&queue_lock);
     
-    proc->time_slice = calculate_time_slice(proc);
-    
+    // Don't recalculate time slice here, it will be done in get_proc
     proc->ready_queue = &ready_queue;
     proc->running_list = &running_list;
+    proc->cfs_ready_tree = cfs_ready_tree;
     
     Dtype *data = createDtype(proc, timestamp++);
     insertNode(&cfs_ready_tree, data);
-
-	traverse(cfs_ready_tree, re_calculate_time_slice, PREORDER);
+    update_total_weight(proc->weight, 1);
+    
     pthread_mutex_unlock(&queue_lock);
 }
 
-/* Initial insertion */
 void add_cfs_proc(struct pcb_t *proc) {
     pthread_mutex_lock(&queue_lock);
     
-    if (getMinNode(cfs_ready_tree) == NULL) {
-		proc->vruntime = 0;
-	} else {
-		proc->vruntime = getMinNode(cfs_ready_tree)->data->proc->vruntime;        
-	}
-	proc->weight = calculate_process_weight(proc);
+    // Set initial vruntime to minimum in tree or 0
+    if (cfs_ready_tree == NULL || getMinNode(cfs_ready_tree) == NULL) {
+        proc->vruntime = 0;
+    } else {
+        proc->vruntime = getMinNode(cfs_ready_tree)->data->proc->vruntime;
+    }
+    
+    proc->weight = calculate_process_weight(proc);
     proc->time_slice = calculate_time_slice(proc);
-
-	traverse(cfs_ready_tree, re_calculate_time_slice, PREORDER);
     
     proc->ready_queue = &ready_queue;
     proc->running_list = &running_list;
+    proc->cfs_ready_tree = cfs_ready_tree;
     
     Dtype *data = createDtype(proc, timestamp++);
     insertNode(&cfs_ready_tree, data);
+    update_total_weight(proc->weight, 1);
     
     pthread_mutex_unlock(&queue_lock);
-}
-
-struct pcb_t * get_proc(void) {
-    return get_cfs_proc();
-}
-
-void put_proc(struct pcb_t * proc) {
-	proc->ready_queue = &ready_queue;
-	proc->cfs_ready_tree = cfs_ready_tree;
-	proc->running_list = &running_list;
-
-	pthread_mutex_lock(&queue_lock);
-	enqueue(&running_list, proc);
-	pthread_mutex_unlock(&queue_lock);
-
-    put_cfs_proc(proc);
-}
-
-void add_proc(struct pcb_t * proc) {
-	proc->ready_queue = &ready_queue;
-	proc->cfs_ready_tree = cfs_ready_tree;
-	proc->running_list = &running_list;
-
-	pthread_mutex_lock(&queue_lock);
-	enqueue(&running_list, proc);
-	pthread_mutex_unlock(&queue_lock);
-	
-    add_cfs_proc(proc);
 }
 
 void init_scheduler(void) {
@@ -179,8 +139,10 @@ void init_scheduler(void) {
     running_list.size = 0;
     pthread_mutex_init(&queue_lock, NULL);
     cfs_ready_tree = NULL; 
-	timestamp = 0;
+    timestamp = 0;
+    cached_total_weight = 0;
 }
+
 #endif
 
 int queue_empty(void) {
@@ -316,8 +278,35 @@ void add_proc(struct pcb_t *proc)
 	pthread_mutex_unlock(&queue_lock);
 	add_mlq_proc(proc);
 }
+#elif defined(CFS_SCHED)
+struct pcb_t *get_proc(void) {
+    return get_cfs_proc();
+}
+
+void put_proc(struct pcb_t *proc) {
+    proc->ready_queue = &ready_queue;
+    proc->cfs_ready_tree = cfs_ready_tree;
+    proc->running_list = &running_list;
+
+    pthread_mutex_lock(&queue_lock);
+    enqueue(&running_list, proc);
+    pthread_mutex_unlock(&queue_lock);
+
+    put_cfs_proc(proc);
+}
+
+void add_proc(struct pcb_t *proc) {
+    proc->ready_queue = &ready_queue;
+    proc->cfs_ready_tree = cfs_ready_tree;
+    proc->running_list = &running_list;
+
+    pthread_mutex_lock(&queue_lock);
+    enqueue(&running_list, proc);
+    pthread_mutex_unlock(&queue_lock);
+    
+    add_cfs_proc(proc);
+}
 #else
-#ifndef CFS_SCHED
 struct pcb_t *get_proc(void)
 {
 	struct pcb_t *proc = NULL;
@@ -357,7 +346,6 @@ void add_proc(struct pcb_t *proc)
 	enqueue(&running_list, proc);
 	pthread_mutex_unlock(&queue_lock);
 }
-#endif
 #endif
 
 
