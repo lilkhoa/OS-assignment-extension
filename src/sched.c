@@ -28,12 +28,12 @@ extern int time_slot;
 // Optimize weight calculation
 double calculate_process_weight(struct pcb_t *proc) {
     int niceness = proc->niceness;
-    // Use bit shifting for better performance
+    // Use larger weight differences for better priority separation
     double weight = 1024.0;
     if (niceness > 0) {
-        weight /= (1 << (niceness / 10));
+        weight /= (1 << ((niceness + 5) / 10));
     } else if (niceness < 0) {
-        weight *= (1 << (-niceness / 10));
+        weight *= (1 << ((-niceness + 5) / 10));
     }
     return weight;
 }
@@ -58,16 +58,16 @@ uint32_t calculate_time_slice(struct pcb_t *proc) {
     double weight = proc->weight;
     double total_weight = get_total_weight();
     
-    // Ensure minimum time slice of 2 to reduce context switching
+    // Increase minimum time slice to reduce context switching
     uint32_t time_slice = (uint32_t)((weight * TARGET_LATENCY) / total_weight);
-    return time_slice > 2 ? time_slice : 2;
+    return time_slice > 4 ? time_slice : 4;  // Increased minimum from 2 to 4
 }
 
 void update_vruntime(struct pcb_t *proc, uint32_t exec_time) {
     double weight = proc->weight;
-    // Use bit shifting for multiplication
+    // Scale down vruntime increments for higher priority processes
     uint64_t scaled_exec_time = ((uint64_t)exec_time << 10);
-    uint64_t vruntime_delta = (uint64_t)(scaled_exec_time / weight);
+    uint64_t vruntime_delta = (uint64_t)(scaled_exec_time / (weight * 1.5));
     proc->vruntime += (vruntime_delta > 0 ? vruntime_delta : 1);
 }
 

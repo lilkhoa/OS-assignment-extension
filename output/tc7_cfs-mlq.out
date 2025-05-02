@@ -2,70 +2,84 @@ Time slot   0
 ld_routine
 Time slot   1
 	Loaded a process at input/proc/p8, PID: 1, PRIO: 0
-	CPU 0: Dispatched process  1
 Time slot   2
+	CPU 0: Dispatched process  1
 	Loaded a process at input/proc/p7, PID: 2, PRIO: 0
 Time slot   3
-	CPU 0: Processed  1 has finished
 	Loaded a process at input/proc/p5, PID: 3, PRIO: 0
-	CPU 0: Dispatched process  2
 Time slot   4
+	CPU 0: Processed  1 has finished
+
+Process 1 stats:
+  Turnaround time: 4
+  Average wait: -nan
+  Times scheduled: 0
+	CPU 0: Dispatched process  2
 Time slot   5
 Time slot   6
 Time slot   7
-	CPU 0: Put process  2 to run queue
-	CPU 0: Dispatched process  2
 Time slot   8
+	CPU 0: Dispatched process  2
 Time slot   9
 	Loaded a process at input/proc/p3, PID: 4, PRIO: 0
 Time slot  10
 Time slot  11
-	CPU 0: Put process  2 to run queue
-	CPU 0: Dispatched process  2
 Time slot  12
+	CPU 0: Dispatched process  2
 Time slot  13
-	CPU 0: Processed  2 has finished
-	CPU 0: Dispatched process  4
 Time slot  14
+	CPU 0: Processed  2 has finished
+
+Process 2 stats:
+  Turnaround time: 12
+  Average wait: 8.000000
+  Times scheduled: 2
+	CPU 0: Dispatched process  4
 Time slot  15
 Time slot  16
 Time slot  17
-	CPU 0: Put process  4 to run queue
-	CPU 0: Dispatched process  4
 Time slot  18
+	CPU 0: Dispatched process  4
 Time slot  19
 Time slot  20
 Time slot  21
-	CPU 0: Put process  4 to run queue
-	CPU 0: Dispatched process  4
 Time slot  22
-	CPU 0: Processed  4 has finished
-	CPU 0: Dispatched process  3
+	CPU 0: Dispatched process  4
 Time slot  23
+	CPU 0: Processed  4 has finished
+
+Process 4 stats:
+  Turnaround time: 19
+  Average wait: 16.000000
+  Times scheduled: 2
+	CPU 0: Dispatched process  3
 Time slot  24
 Time slot  25
 Time slot  26
-	CPU 0: Put process  3 to run queue
-	CPU 0: Dispatched process  3
 Time slot  27
+	CPU 0: Dispatched process  3
 Time slot  28
 Time slot  29
 Time slot  30
-	CPU 0: Put process  3 to run queue
-	CPU 0: Dispatched process  3
 Time slot  31
+	CPU 0: Dispatched process  3
 Time slot  32
 Time slot  33
 Time slot  34
-	CPU 0: Put process  3 to run queue
-	CPU 0: Dispatched process  3
 Time slot  35
+	CPU 0: Dispatched process  3
 Time slot  36
 Time slot  37
+Time slot  38
 	CPU 0: Processed  3 has finished
+
+Process 3 stats:
+  Turnaround time: 35
+  Average wait: 28.000000
+  Times scheduled: 3
 	CPU 0 stopped
 
 Overall scheduler statistics:
-Average turnaround time: -nan
-Average waiting time: -nan
-Total processes completed: 0
+Average turnaround time: 17.500000
+Average waiting time: 33.000000
+Total processes completed: 4

@@ -11,29 +11,47 @@ Time slot   4
 Time slot   5
 Time slot   6
 Time slot   7
+	CPU 0: Dispatched process  1
 Time slot   8
-	CPU 0: Put process  1 to run queue
-	CPU 0: Dispatched process  2
 Time slot   9
+	CPU 0: Processed  1 has finished
+
+Process 1 stats:
+  Turnaround time: 10
+  Average wait: 8.000000
+  Times scheduled: 1
+	CPU 0: Dispatched process  2
 Time slot  10
 Time slot  11
 Time slot  12
-	CPU 0: Processed  2 has finished
-	CPU 0: Dispatched process  1
 Time slot  13
-Time slot  14
-	CPU 0: Processed  1 has finished
+	CPU 0: Processed  2 has finished
+
+Process 2 stats:
+  Turnaround time: 12
+  Average wait: -nan
+  Times scheduled: 0
 	CPU 0: Dispatched process  3
+Time slot  14
 Time slot  15
 Time slot  16
 Time slot  17
 Time slot  18
 Time slot  19
-	CPU 0: Put process  3 to run queue
 	CPU 0: Dispatched process  3
 Time slot  20
 Time slot  21
 Time slot  22
 	CPU 0: Processed  3 has finished
+
+Process 3 stats:
+  Turnaround time: 20
+  Average wait: 17.000000
+  Times scheduled: 1
 	CPU 0 stopped
 Time slot  23
+
+Overall scheduler statistics:
+Average turnaround time: 14.000000
+Average waiting time: 8.333333
+Total processes completed: 3

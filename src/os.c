@@ -158,19 +158,32 @@ static void * cpu_routine(void * args) {
                            next_slot(timer_id);
                            continue; /* First load failed. skip dummy load */
                         }
-		}else if (proc->pc == proc->code->size) {
+		} else if (proc->pc == proc->code->size) {
 			/* The process has finish it job */
 			printf("\tCPU %d: Processed %2d has finished\n",
-				id ,proc->pid);
+				id, proc->pid);
+			
+			// Add this line to set completion time
+			proc->last_completion = current_time();
+			
+			// Add this line to update statistics
+			update_stats(proc);
+			
 			free(proc);
 			proc = get_proc();
 			time_left = 0;
-		}else if (time_left == 0) {
-			/* The process has done its job in current time slot */
-			printf("\tCPU %d: Put process %2d to run queue\n",
+		}
+
+		// When dispatching a process:
+		else if (time_left == 0) {
+			printf("\tCPU %d: Dispatched process %2d\n",
 				id, proc->pid);
-			put_proc(proc);
-			proc = get_proc();
+			
+			// Add these lines to track scheduling
+			proc->times_scheduled++;
+			proc->total_wait += (current_time() - proc->first_arrival);
+			
+			time_left = time_slot;
 		}
 		
 		/* Recheck process status after loading new process */
