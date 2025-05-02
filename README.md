@@ -33,9 +33,9 @@ chmod +x run.sh
 ```
 
 This will run multiple test cases with different time quantum settings:
-- `cfs_standard` (time quantum = 4)
-- `cfs_short_tq` (time quantum = 2)
-- `cfs_long_tq` (time quantum = 8)
+- `cfs_standard` (target latency = 4)
+- `cfs_short_tq` (target latency = 2)
+- `cfs_long_tq` (target latency = 8)
 
 Output files will be saved to the `output/` directory.
 
@@ -46,14 +46,25 @@ To run a specific test case with the CFS scheduler:
 ```bash
 make clean
 CFS_SCHED=1 make
-./os tc4
+./os <test_case_file>
+```
+For example, to run the `tc1` test case:
+
+```bash
+./os tc1
 ```
 
 You can also redirect the output to a file:
 
 ```bash
-./os tc4 > output/tc4-cfs.out
+./os <test_case_file> > output/<test_case_file>.out
 ```
+For example:
+
+```bash
+./os tc1 > output/tc1.out
+```
+
 
 ### Test Case Format
 
@@ -66,7 +77,7 @@ Each test case file follows this format:
 ...
 ```
 Where:
-- `priority` is a placeholder (not used by CFS)
+- `priority` is the priority value of the process. It is used by the MLQ scheduler.
 - `niceness` is used by CFS scheduler (range -20 to 10, lower value = higher priority)
 
 Each process in file input/proc/<process_name> is defined as:
@@ -102,7 +113,7 @@ The CFS scheduler output provides detailed information about scheduling decision
    ```
 
 Key metrics in the output:
-- **niceness**: Process priority (-20 to 10, lower is higher priority)
-- **weight**: Calculated from niceness, determines CPU time allocation
-- **vruntime**: Virtual runtime tracking fairness (increases more slowly for higher priority processes)
-- **time_slice**: Dynamically calculated execution time for the process
+- **niceness**: Process priority (-20 to 10, lower is higher priority).
+- **weight**: Calculated from niceness, determines CPU time allocation.
+- **vruntime**: Virtual runtime tracking fairness (increases more slowly for higher priority processes).
+- **time_slice**: Dynamically calculated execution time for the process.
