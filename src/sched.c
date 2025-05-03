@@ -17,7 +17,7 @@ static int slot[MAX_PRIO];
 
 #ifdef CFS_SCHED
 #include "../include/RBTree.h"
-#define VRUNTIME_SCALE 1000
+#define VRUNTIME_SCALE 1000 // for better visualization of vruntime
 // Use time_slot from os.c as TARGET_LATENCY
 extern int time_slot; // This will be the TARGET_LATENCY for CFS
 
@@ -111,7 +111,7 @@ struct pcb_t *get_cfs_proc(void) {
 void put_cfs_proc(struct pcb_t *proc) {
     pthread_mutex_lock(&queue_lock);
     
-    proc->time_slice = calculate_time_slice(proc);
+    // proc->time_slice = calculate_time_slice(proc);
     
     proc->ready_queue = &ready_queue;
     proc->running_list = &running_list;
@@ -119,7 +119,7 @@ void put_cfs_proc(struct pcb_t *proc) {
     Dtype *data = createDtype(proc, timestamp++);
     insertNode(&cfs_ready_tree, data);
 
-	traverse(cfs_ready_tree, re_calculate_time_slice, PREORDER);
+	// traverse(cfs_ready_tree, re_calculate_time_slice, PREORDER);
     pthread_mutex_unlock(&queue_lock);
 }
 
@@ -135,7 +135,7 @@ void add_cfs_proc(struct pcb_t *proc) {
 	proc->weight = calculate_process_weight(proc);
     proc->time_slice = calculate_time_slice(proc);
 
-	traverse(cfs_ready_tree, re_calculate_time_slice, PREORDER);
+	// traverse(cfs_ready_tree, re_calculate_time_slice, PREORDER);
     
     proc->ready_queue = &ready_queue;
     proc->running_list = &running_list;

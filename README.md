@@ -10,9 +10,9 @@ This project implements the CFS (Completely Fair Scheduler) algorithm, which is 
 
 ### Prerequisites
 
-- GCC compiler
-- Make build system
-- POSIX-compatible operating system (Linux recommended)
+- GCC compiler.
+- Make build system.
+- POSIX-compatible operating system (Linux recommended).
 
 ### Compiling the Project with CFS Scheduler
 
@@ -32,10 +32,10 @@ chmod +x run.sh
 ./run.sh
 ```
 
-This will run multiple test cases with different time quantum settings:
-- `cfs_standard` (target latency = 4)
-- `cfs_short_tq` (target latency = 2)
-- `cfs_long_tq` (target latency = 8)
+This will run multiple test cases with different target latency settings:
+- `cfs_standard` (target latency = 4).
+- `cfs_short_tq` (target latency = 2).
+- `cfs_long_tq` (target latency = 8).
 
 Output files will be saved to the `output/` directory.
 
@@ -78,7 +78,7 @@ Each test case file follows this format:
 ```
 Where:
 - `priority` is the priority value of the process. It is used by the MLQ scheduler.
-- `niceness` is used by CFS scheduler (range -20 to 10, lower value = higher priority)
+- `niceness` is used by CFS scheduler (range -20 to 10, lower value = higher priority).
 
 Each process in file input/proc/<process_name> is defined as:
 ```
@@ -89,9 +89,9 @@ Each process in file input/proc/<process_name> is defined as:
 <instruction_n>
 ```
 Where:
-- `<default priority>` is the default priority of the process (not used by CFS)
-- `<instruction_count>` is the number of instructions to execute
-- `<instruction_n>` is the instruction to execute (e.g., `calc`)
+- `<default priority>` is the default priority of the process (not used by CFS).
+- `<instruction_count>` is the number of instructions to execute.
+- `<instruction_n>` is the instruction to execute (e.g., `calc`).
 
 ## Understanding CFS Output
 
