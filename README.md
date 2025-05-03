@@ -79,6 +79,7 @@ Each test case file follows this format:
 Where:
 - `priority` is the priority value of the process. It is used by the MLQ scheduler.
 - `niceness` is used by CFS scheduler (range -20 to 10, lower value = higher priority).
+- When comparing CFS and MLQ, it is important to assign values to `priority` and `niceness` appropriately (the smaller the `priority` and `niceness`, the higher the process priority).
 
 Each process in file input/proc/<process_name> is defined as:
 ```
@@ -91,7 +92,7 @@ Each process in file input/proc/<process_name> is defined as:
 Where:
 - `<default priority>` is the default priority of the process (not used by CFS).
 - `<instruction_count>` is the number of instructions to execute.
-- `<instruction_n>` is the instruction to execute (e.g., `calc`).
+- `<instruction_n>` is the instruction to execute. When performing a demo for the CFS scheduling algorithm, we should primarily use the `calc` command instead of memory-related commands (e.g. `alloc`, `free`), as these commands will make the scheduling output difficult to read.
 
 ## Understanding CFS Output
 
