@@ -21,8 +21,8 @@ Time slot   7
 Time slot   8
 	CPU 0: Dispatched process  2
 Time slot   9
-	Loaded a process at input/proc/p3, PID: 4, PRIO: 0
 Time slot  10
+	Loaded a process at input/proc/p3, PID: 4, PRIO: 0
 Time slot  11
 Time slot  12
 	CPU 0: Dispatched process  2

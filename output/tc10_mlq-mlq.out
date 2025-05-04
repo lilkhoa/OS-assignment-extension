@@ -3,14 +3,13 @@ ld_routine
 Time slot   1
 	Loaded a process at input/proc/p5, PID: 1, PRIO: 0
 	CPU 0: Dispatched process  1
+	Loaded a process at input/proc/p7, PID: 2, PRIO: 2
 Time slot   2
 Time slot   3
-	Loaded a process at input/proc/p1, PID: 2, PRIO: 0
 Time slot   4
-	CPU 0: Dispatched process  1
 Time slot   5
-Time slot   6
 	CPU 0: Dispatched process  1
+Time slot   6
 Time slot   7
 Time slot   8
 Time slot   9
@@ -18,37 +17,39 @@ Time slot   9
 Time slot  10
 Time slot  11
 Time slot  12
-	CPU 0: Dispatched process  1
 Time slot  13
+	CPU 0: Dispatched process  1
 Time slot  14
 Time slot  15
+Time slot  16
 	CPU 0: Processed  1 has finished
 
 Process 1 stats:
   Turnaround time: 16
-  Average wait: 8.500000
-  Times scheduled: 4
+  Average wait: 9.000000
+  Times scheduled: 3
 	CPU 0: Dispatched process  2
-Time slot  16
 Time slot  17
 Time slot  18
-	CPU 0: Dispatched process  2
 Time slot  19
 Time slot  20
-Time slot  21
 	CPU 0: Dispatched process  2
+Time slot  21
 Time slot  22
 Time slot  23
+Time slot  24
+	CPU 0: Dispatched process  2
+Time slot  25
+Time slot  26
 	CPU 0: Processed  2 has finished
 
 Process 2 stats:
-  Turnaround time: 22
-  Average wait: 18.500000
+  Turnaround time: 24
+  Average wait: 20.000000
   Times scheduled: 2
 	CPU 0 stopped
-Time slot  24
 
 Overall scheduler statistics:
-Average turnaround time: 19.000000
-Average waiting time: 35.500000
+Average turnaround time: 20.000000
+Average waiting time: 33.500000
 Total processes completed: 2

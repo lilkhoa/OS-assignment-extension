@@ -1,30 +1,30 @@
 Time slot   0
 ld_routine
 	Loaded a process at input/proc/p5, PID: 1, NICENESS: 0
-	CPU 0: Dispatched process  1 (niceness: 0, weight: 1024.000000, vruntime: 0.000000, time_slice: 4)
 Time slot   1
+	CPU 0: Dispatched process  1 (niceness: 0, weight: 1024.000000, vruntime: 0.000000, time_slice: 4)
 Time slot   2
 	Loaded a process at input/proc/p1, PID: 2, NICENESS: -10
 Time slot   3
 Time slot   4
 Time slot   5
 	CPU 0: Put process  1 to run queue (niceness: 0, vruntime: 2.000000)
-	CPU 0: Dispatched process  2 (niceness: -10, weight: 2048.000000, vruntime: 0.000000, time_slice: 4)
+	CPU 0: Dispatched process  2 (niceness: -10, weight: 9536.743164, vruntime: 0.000000, time_slice: 7)
 Time slot   6
 Time slot   7
 Time slot   8
 Time slot   9
-	CPU 0: Put process  2 to run queue (niceness: -10, vruntime: 1.000000)
-	CPU 0: Dispatched process  2 (niceness: -10, weight: 2048.000000, vruntime: 1.000000, time_slice: 4)
 Time slot  10
 Time slot  11
 Time slot  12
+	CPU 0: Put process  2 to run queue (niceness: -10, vruntime: 1.000000)
+	CPU 0: Dispatched process  2 (niceness: -10, weight: 9536.743164, vruntime: 1.000000, time_slice: 7)
 Time slot  13
 	CPU 0: Processed  2 has finished (niceness: -10, vruntime: 1.000000)
 
 Process 2 stats:
   Turnaround time: 11
-  Average wait: 3.500000
+  Average wait: 5.000000
   Times scheduled: 2
 	CPU 0: Dispatched process  1 (niceness: 0, weight: 1024.000000, vruntime: 2.000000, time_slice: 4)
 Time slot  14
@@ -52,5 +52,5 @@ Process 1 stats:
 
 Overall scheduler statistics:
 Average turnaround time: 17.500000
-Average waiting time: 25.000000
+Average waiting time: 26.500000
 Total processes completed: 2

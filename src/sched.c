@@ -28,14 +28,7 @@ extern int time_slot;
 // Optimize weight calculation
 double calculate_process_weight(struct pcb_t *proc) {
     int niceness = proc->niceness;
-    // Use larger weight differences for better priority separation
-    double weight = 1024.0;
-    if (niceness > 0) {
-        weight /= (1 << ((niceness + 5) / 10));
-    } else if (niceness < 0) {
-        weight *= (1 << ((-niceness + 5) / 10));
-    }
-    return weight;
+    return 1024.0 * pow(1.25, -niceness);
 }
 
 // Update total weight without extra locking
@@ -54,13 +47,17 @@ double get_total_weight(void) {
 
 // Optimize time slice calculation
 uint32_t calculate_time_slice(struct pcb_t *proc) {
-    const int TARGET_LATENCY = time_slot;
+    int min_granularity = 4;
+    int base_latency = time_slot; // or a constant like 20
+    int num_procs = count_rbtree_nodes(cfs_ready_tree);
+    int target_latency = num_procs * min_granularity;
+    if (target_latency < base_latency) target_latency = base_latency;
+
     double weight = proc->weight;
     double total_weight = get_total_weight();
-    
-    // Increase minimum time slice to reduce context switching
-    uint32_t time_slice = (uint32_t)((weight * TARGET_LATENCY) / total_weight);
-    return time_slice > 4 ? time_slice : 4;  // Increased minimum from 2 to 4
+    uint32_t time_slice = (uint32_t)((weight * target_latency) / total_weight);
+    if (time_slice < min_granularity) time_slice = min_granularity;
+    return time_slice;
 }
 
 void update_vruntime(struct pcb_t *proc, uint32_t exec_time) {

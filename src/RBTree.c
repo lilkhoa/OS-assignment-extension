@@ -410,3 +410,8 @@ RBNode *getMinNode(RBNode *root) {
     }
     return root;
 }
+
+int count_rbtree_nodes(RBNode *root) {
+    if (!root) return 0;
+    return 1 + count_rbtree_nodes(root->left) + count_rbtree_nodes(root->right);
+}

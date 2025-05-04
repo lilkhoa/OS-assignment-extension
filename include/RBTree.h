@@ -60,4 +60,7 @@ void traverse(RBNode *root, void (*visit)(RBNode *node), enum Traversal order);
 // Getting minimum node
 RBNode *getMinNode(RBNode *root);
 
+// Counting nodes
+int count_rbtree_nodes(RBNode *root);
+
 #endif // RB_TREE
