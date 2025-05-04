@@ -2,62 +2,72 @@ Time slot   0
 ld_routine
 Time slot   1
 	Loaded a process at input/proc/p5, PID: 1, PRIO: 0
-Time slot   2
 	CPU 0: Dispatched process  1
+Time slot   2
 Time slot   3
 	Loaded a process at input/proc/p8, PID: 2, PRIO: 0
 Time slot   4
 Time slot   5
-	Loaded a process at input/proc/p1, PID: 3, PRIO: 2
-Time slot   6
 	CPU 0: Put process  1 to run queue
 	CPU 0: Dispatched process  2
+	Loaded a process at input/proc/p1, PID: 3, PRIO: 2
+Time slot   6
 Time slot   7
+	CPU 0: Processed  2 has finished
+	      Priority: 0, Waiting time: 2, Turnaround time: 4, CPU burst time: 2
+	CPU 0: Dispatched process  1
 	Loaded a process at input/proc/p3, PID: 4, PRIO: 1
 Time slot   8
-	CPU 0: Processed  2 has finished
-	CPU 0: Dispatched process  1
 Time slot   9
 Time slot  10
 Time slot  11
-Time slot  12
 	CPU 0: Put process  1 to run queue
 	CPU 0: Dispatched process  1
+Time slot  12
 Time slot  13
 Time slot  14
 Time slot  15
-Time slot  16
 	CPU 0: Put process  1 to run queue
 	CPU 0: Dispatched process  1
+Time slot  16
 Time slot  17
 Time slot  18
-Time slot  19
 	CPU 0: Processed  1 has finished
+	      Priority: 0, Waiting time: 2, Turnaround time: 17, CPU burst time: 15
 	CPU 0: Dispatched process  4
+Time slot  19
 Time slot  20
 Time slot  21
 Time slot  22
-Time slot  23
 	CPU 0: Put process  4 to run queue
 	CPU 0: Dispatched process  4
+Time slot  23
 Time slot  24
 Time slot  25
 Time slot  26
-Time slot  27
 	CPU 0: Put process  4 to run queue
 	CPU 0: Dispatched process  4
-Time slot  28
+Time slot  27
 	CPU 0: Processed  4 has finished
+	      Priority: 1, Waiting time: 11, Turnaround time: 20, CPU burst time: 9
 	CPU 0: Dispatched process  3
+Time slot  28
 Time slot  29
 Time slot  30
 Time slot  31
-Time slot  32
 	CPU 0: Put process  3 to run queue
 	CPU 0: Dispatched process  3
+Time slot  32
 Time slot  33
 Time slot  34
 Time slot  35
-Time slot  36
 	CPU 0: Processed  3 has finished
+	      Priority: 2, Waiting time: 22, Turnaround time: 30, CPU burst time: 8
 	CPU 0 stopped
+
+=== Scheduling Statistics ===
+Scheduler: MLQ (Multi-Level Queue)
+Number of processes completed: 4
+Average waiting time: 9.25 time units
+Average turnaround time: 17.75 time units
+============================

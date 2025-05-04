@@ -17,6 +17,10 @@ int time_slot; // Make time_slot globally accessible for CFS scheduling
 static int num_cpus;
 static int done = 0;
 
+static uint32_t total_waiting_time = 0;
+static uint32_t total_turnaround_time = 0;
+static uint32_t completed_processes = 0;
+
 #ifdef MM_PAGING
 static int memramsz;
 static int memswpsz[PAGING_MAX_MMSWP];
@@ -69,8 +73,19 @@ static void * cfs_cpu_routine(void * args) {
             }
         } else if (proc->pc == proc->code->size) {
             /* The process has finished its job */
+            proc->finish_time = current_time();
+            proc->cpu_burst_time += executed_time;
+            proc->turnaround_time = proc->finish_time - proc->arrival_time;
+            proc->waiting_time = proc->turnaround_time - proc->cpu_burst_time;
+            
+            total_waiting_time += proc->waiting_time;
+            total_turnaround_time += proc->turnaround_time;
+            completed_processes++;
+            
             printf("\tCPU %d: Processed %2d has finished (niceness: %d, vruntime: %f)\n",
                 id, proc->pid, proc->niceness, proc->vruntime);
+            printf("\t      Waiting time: %u, Turnaround time: %u, CPU burst time: %u\n",
+                proc->waiting_time, proc->turnaround_time, proc->cpu_burst_time);
             
             /* Update vruntime based on actual execution time */
             if (executed_time > 0) {
@@ -85,6 +100,7 @@ static void * cfs_cpu_routine(void * args) {
             /* Update vruntime based on actual execution time */
             if (executed_time > 0) {
                 update_vruntime(proc, executed_time);
+                proc->cpu_burst_time += executed_time;
             }
 
             /* The process has done its job in current time slice or has been preempted */
@@ -132,6 +148,8 @@ static void * cpu_routine(void * args) {
 	/* Check for new process in ready queue */
 	int time_left = 0;
 	struct pcb_t * proc = NULL;
+	uint32_t executed_time = 0;
+	
 	while (1) {
 		/* Check the status of current process */
 		if (proc == NULL) {
@@ -139,22 +157,42 @@ static void * cpu_routine(void * args) {
 		 	* ready queue */
 			proc = get_proc();
 			if (proc == NULL) {
-                           next_slot(timer_id);
-                           continue; /* First load failed. skip dummy load */
-                        }
-		}else if (proc->pc == proc->code->size) {
+                next_slot(timer_id);
+                continue; /* First load failed. skip dummy load */
+            }
+            executed_time = 0;
+		} else if (proc->pc == proc->code->size) {
 			/* The process has finish it job */
-			printf("\tCPU %d: Processed %2d has finished\n",
-				id ,proc->pid);
+			proc->finish_time = current_time();
+			proc->cpu_burst_time += executed_time;
+			proc->turnaround_time = proc->finish_time - proc->arrival_time;
+			proc->waiting_time = proc->turnaround_time - proc->cpu_burst_time;
+			
+			// Update global statistics
+			total_waiting_time += proc->waiting_time;
+			total_turnaround_time += proc->turnaround_time;
+			completed_processes++;
+			
+			printf("\tCPU %d: Processed %2d has finished\n", id, proc->pid);
+#ifdef MLQ_SCHED
+			printf("\t      Priority: %u, ", proc->prio);
+#endif
+			printf("Waiting time: %u, Turnaround time: %u, CPU burst time: %u\n",
+				proc->waiting_time, proc->turnaround_time, proc->cpu_burst_time);
+			
 			free(proc);
 			proc = get_proc();
 			time_left = 0;
-		}else if (time_left == 0) {
+			executed_time = 0;
+		} else if (time_left == 0) {
 			/* The process has done its job in current time slot */
+			proc->cpu_burst_time += executed_time;
+			
 			printf("\tCPU %d: Put process %2d to run queue\n",
 				id, proc->pid);
 			put_proc(proc);
 			proc = get_proc();
+			executed_time = 0;
 		}
 		
 		/* Recheck process status after loading new process */
@@ -162,20 +200,22 @@ static void * cpu_routine(void * args) {
 			/* No process to run, exit */
 			printf("\tCPU %d stopped\n", id);
 			break;
-		}else if (proc == NULL) {
+		} else if (proc == NULL) {
 			/* There may be new processes to run in
 			 * next time slots, just skip current slot */
 			next_slot(timer_id);
 			continue;
-		}else if (time_left == 0) {
+		} else if (time_left == 0) {
 			printf("\tCPU %d: Dispatched process %2d\n",
 				id, proc->pid);
 			time_left = time_slot;
+			executed_time = 0;
 		}
 		
 		/* Run current process */
 		run(proc);
 		time_left--;
+		executed_time++;
 		next_slot(timer_id);
 	}
 	detach_event(timer_id);
@@ -211,6 +251,12 @@ static void * ld_routine(void * args) {
         proc->mswp = mswp;
         proc->active_mswp = active_mswp;
 #endif
+        proc->arrival_time = current_time();
+        proc->cpu_burst_time = 0;
+        proc->finish_time = 0;
+        proc->waiting_time = 0;
+        proc->turnaround_time = 0;
+        
         printf("\tLoaded a process at %s, PID: %d", ld_processes.path[i], proc->pid);
 #ifdef MLQ_SCHED
         printf(", PRIO: %ld", ld_processes.prio[i]);
@@ -379,7 +425,23 @@ int main(int argc, char * argv[]) {
 
 	/* Stop timer */
 	stop_timer();
+	
+	if (completed_processes > 0) {
+		float avg_waiting_time = (float)total_waiting_time / completed_processes;
+		float avg_turnaround_time = (float)total_turnaround_time / completed_processes;
+		
+		printf("\n=== Scheduling Statistics ===\n");
+#ifdef CFS_SCHED
+		printf("Scheduler: CFS (Completely Fair Scheduler)\n");
+#endif
+#ifdef MLQ_SCHED
+		printf("Scheduler: MLQ (Multi-Level Queue)\n");
+#endif
+		printf("Number of processes completed: %u\n", completed_processes);
+		printf("Average waiting time: %.2f time units\n", avg_waiting_time);
+		printf("Average turnaround time: %.2f time units\n", avg_turnaround_time);
+		printf("============================\n");
+	}
 
 	return 0;
-
 }

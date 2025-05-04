@@ -93,6 +93,7 @@ Time slot  37
 	CPU 0: Dispatched process  5 (niceness: -20, weight: 4096.000000, vruntime: 5.371094, time_slice: 2)
 Time slot  38
 	CPU 0: Processed  5 has finished (niceness: -20, vruntime: 5.371094)
+	      Waiting time: 14, Turnaround time: 29, CPU burst time: 15
 	CPU 0: Dispatched process  2 (niceness: 10, weight: 512.000000, vruntime: 5.859375, time_slice: 1)
 Time slot  39
 	CPU 0: Put process  2 to run queue (niceness: 10, vruntime: 7.812500)
@@ -102,6 +103,7 @@ Time slot  40
 	CPU 0: Dispatched process  4 (niceness: -10, weight: 2048.000000, vruntime: 5.859375, time_slice: 2)
 Time slot  41
 	CPU 0: Processed  4 has finished (niceness: -10, vruntime: 5.859375)
+	      Waiting time: 25, Turnaround time: 34, CPU burst time: 9
 	CPU 0: Dispatched process  3 (niceness: 0, weight: 1024.000000, vruntime: 6.835938, time_slice: 2)
 Time slot  42
 Time slot  43
@@ -119,6 +121,7 @@ Time slot  47
 	CPU 0: Dispatched process  3 (niceness: 0, weight: 1024.000000, vruntime: 10.742188, time_slice: 2)
 Time slot  48
 	CPU 0: Processed  3 has finished (niceness: 0, vruntime: 10.742188)
+	      Waiting time: 31, Turnaround time: 43, CPU burst time: 12
 	CPU 0: Dispatched process  2 (niceness: 10, weight: 512.000000, vruntime: 11.718750, time_slice: 3)
 Time slot  49
 Time slot  50
@@ -130,9 +133,18 @@ Time slot  52
 	CPU 0: Dispatched process  2 (niceness: 10, weight: 512.000000, vruntime: 17.578125, time_slice: 3)
 Time slot  53
 	CPU 0: Processed  2 has finished (niceness: 10, vruntime: 17.578125)
+	      Waiting time: 39, Turnaround time: 49, CPU burst time: 10
 	CPU 0: Dispatched process  1 (niceness: 20, weight: 256.000000, vruntime: 19.531250, time_slice: 4)
 Time slot  54
 Time slot  55
 Time slot  56
 	CPU 0: Processed  1 has finished (niceness: 20, vruntime: 19.531250)
+	      Waiting time: 47, Turnaround time: 55, CPU burst time: 8
 	CPU 0 stopped
+
+=== Scheduling Statistics ===
+Scheduler: CFS (Completely Fair Scheduler)
+Number of processes completed: 5
+Average waiting time: 31.20 time units
+Average turnaround time: 42.00 time units
+============================

@@ -16,6 +16,7 @@ Time slot   7
 	Loaded a process at input/proc/p3, PID: 4, NICENESS: -5
 Time slot   8
 	CPU 0: Processed  2 has finished (niceness: -20, vruntime: 0.000000)
+	      Waiting time: 3, Turnaround time: 5, CPU burst time: 2
 	CPU 0: Dispatched process  3 (niceness: 10, weight: 512.000000, vruntime: 0.000000, time_slice: 1)
 Time slot   9
 	CPU 0: Put process  3 to run queue (niceness: 10, vruntime: 1.953125)
@@ -56,6 +57,7 @@ Time slot  24
 Time slot  25
 Time slot  26
 	CPU 0: Processed  1 has finished (niceness: -20, vruntime: 3.173828)
+	      Waiting time: 10, Turnaround time: 25, CPU burst time: 15
 	CPU 0: Dispatched process  4 (niceness: -5, weight: 1448.154688, vruntime: 3.452670, time_slice: 3)
 Time slot  27
 Time slot  28
@@ -67,6 +69,7 @@ Time slot  30
 	CPU 0: Dispatched process  4 (niceness: -5, weight: 1448.154688, vruntime: 5.524272, time_slice: 3)
 Time slot  31
 	CPU 0: Processed  4 has finished (niceness: -5, vruntime: 5.524272)
+	      Waiting time: 15, Turnaround time: 24, CPU burst time: 9
 	CPU 0: Dispatched process  3 (niceness: 10, weight: 512.000000, vruntime: 5.859375, time_slice: 4)
 Time slot  32
 Time slot  33
@@ -76,4 +79,12 @@ Time slot  35
 	CPU 0: Dispatched process  3 (niceness: 10, weight: 512.000000, vruntime: 13.671875, time_slice: 4)
 Time slot  36
 	CPU 0: Processed  3 has finished (niceness: 10, vruntime: 13.671875)
+	      Waiting time: 23, Turnaround time: 31, CPU burst time: 8
 	CPU 0 stopped
+
+=== Scheduling Statistics ===
+Scheduler: CFS (Completely Fair Scheduler)
+Number of processes completed: 4
+Average waiting time: 12.75 time units
+Average turnaround time: 21.25 time units
+============================

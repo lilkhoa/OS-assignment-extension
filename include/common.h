@@ -84,6 +84,14 @@ struct pcb_t
 	uint32_t pc;		 // Program pointer, point to the next instruction
 	struct queue_t *ready_queue;
 	struct queue_t *running_list;
+
+	// Timing metrics for process statistics
+	uint32_t arrival_time;    
+	uint32_t finish_time;     
+	uint32_t cpu_burst_time;  
+	uint32_t waiting_time;    
+	uint32_t turnaround_time; 
+
 #ifdef MLQ_SCHED
 	struct queue_t *mlq_ready_queue;
 	// Priority on execution (if supported), on-fly aka. changeable

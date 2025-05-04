@@ -34,46 +34,79 @@ Time slot  12
 	CPU 0: Put process  4 to run queue (niceness: 10, vruntime: 3.906250)
 	CPU 0: Dispatched process  2 (niceness: -5, weight: 1448.154688, vruntime: 2.071602, time_slice: 1)
 Time slot  13
-	CPU 0: Processed  2 has finished (niceness: -5, vruntime: 2.071602)
+	CPU 0: Put process  2 to run queue (niceness: -5, vruntime: 2.762136)
 	CPU 0: Dispatched process  3 (niceness: 5, weight: 724.077344, vruntime: 2.762136, time_slice: 1)
 Time slot  14
 	CPU 0: Put process  3 to run queue (niceness: 5, vruntime: 4.143204)
-	CPU 0: Dispatched process  1 (niceness: 0, weight: 1024.000000, vruntime: 2.929688, time_slice: 1)
+	CPU 0: Dispatched process  2 (niceness: -5, weight: 1448.154688, vruntime: 2.762136, time_slice: 1)
 Time slot  15
-	CPU 0: Put process  1 to run queue (niceness: 0, vruntime: 3.906250)
-	CPU 0: Dispatched process  4 (niceness: 10, weight: 512.000000, vruntime: 3.906250, time_slice: 1)
+	CPU 0: Put process  2 to run queue (niceness: -5, vruntime: 3.452670)
+	CPU 0: Dispatched process  1 (niceness: 0, weight: 1024.000000, vruntime: 2.929688, time_slice: 1)
 Time slot  16
+	CPU 0: Put process  1 to run queue (niceness: 0, vruntime: 3.906250)
+	CPU 0: Dispatched process  2 (niceness: -5, weight: 1448.154688, vruntime: 3.452670, time_slice: 1)
+Time slot  17
+	CPU 0: Put process  2 to run queue (niceness: -5, vruntime: 4.143204)
+	CPU 0: Dispatched process  4 (niceness: 10, weight: 512.000000, vruntime: 3.906250, time_slice: 1)
+Time slot  18
 	CPU 0: Put process  4 to run queue (niceness: 10, vruntime: 5.859375)
 	CPU 0: Dispatched process  1 (niceness: 0, weight: 1024.000000, vruntime: 3.906250, time_slice: 1)
-Time slot  17
+Time slot  19
 	CPU 0: Put process  1 to run queue (niceness: 0, vruntime: 4.882812)
 	CPU 0: Dispatched process  3 (niceness: 5, weight: 724.077344, vruntime: 4.143204, time_slice: 1)
-Time slot  18
+Time slot  20
 	CPU 0: Put process  3 to run queue (niceness: 5, vruntime: 5.524272)
+	CPU 0: Dispatched process  2 (niceness: -5, weight: 1448.154688, vruntime: 4.143204, time_slice: 1)
+Time slot  21
+	CPU 0: Put process  2 to run queue (niceness: -5, vruntime: 4.833738)
+	CPU 0: Dispatched process  2 (niceness: -5, weight: 1448.154688, vruntime: 4.833738, time_slice: 1)
+Time slot  22
+	CPU 0: Put process  2 to run queue (niceness: -5, vruntime: 5.524272)
 	CPU 0: Dispatched process  1 (niceness: 0, weight: 1024.000000, vruntime: 4.882812, time_slice: 1)
-Time slot  19
+Time slot  23
 	CPU 0: Put process  1 to run queue (niceness: 0, vruntime: 5.859375)
 	CPU 0: Dispatched process  3 (niceness: 5, weight: 724.077344, vruntime: 5.524272, time_slice: 1)
-Time slot  20
+Time slot  24
 	CPU 0: Put process  3 to run queue (niceness: 5, vruntime: 6.905340)
+	CPU 0: Dispatched process  2 (niceness: -5, weight: 1448.154688, vruntime: 5.524272, time_slice: 1)
+Time slot  25
+	CPU 0: Put process  2 to run queue (niceness: -5, vruntime: 6.214806)
 	CPU 0: Dispatched process  4 (niceness: 10, weight: 512.000000, vruntime: 5.859375, time_slice: 1)
-Time slot  21
+Time slot  26
 	CPU 0: Put process  4 to run queue (niceness: 10, vruntime: 7.812500)
 	CPU 0: Dispatched process  1 (niceness: 0, weight: 1024.000000, vruntime: 5.859375, time_slice: 1)
-Time slot  22
-	CPU 0: Put process  1 to run queue (niceness: 0, vruntime: 6.835938)
-	CPU 0: Dispatched process  1 (niceness: 0, weight: 1024.000000, vruntime: 6.835938, time_slice: 1)
-Time slot  23
-	CPU 0: Processed  1 has finished (niceness: 0, vruntime: 6.835938)
-	CPU 0: Dispatched process  3 (niceness: 5, weight: 724.077344, vruntime: 6.905340, time_slice: 2)
-Time slot  24
-Time slot  25
-	CPU 0: Put process  3 to run queue (niceness: 5, vruntime: 9.667476)
-	CPU 0: Dispatched process  4 (niceness: 10, weight: 512.000000, vruntime: 7.812500, time_slice: 1)
-Time slot  26
-	CPU 0: Processed  4 has finished (niceness: 10, vruntime: 7.812500)
-	CPU 0: Dispatched process  3 (niceness: 5, weight: 724.077344, vruntime: 9.667476, time_slice: 3)
 Time slot  27
+	CPU 0: Put process  1 to run queue (niceness: 0, vruntime: 6.835938)
+	CPU 0: Dispatched process  2 (niceness: -5, weight: 1448.154688, vruntime: 6.214806, time_slice: 1)
 Time slot  28
-	CPU 0: Processed  3 has finished (niceness: 5, vruntime: 9.667476)
+	CPU 0: Put process  2 to run queue (niceness: -5, vruntime: 6.905340)
+	CPU 0: Dispatched process  1 (niceness: 0, weight: 1024.000000, vruntime: 6.835938, time_slice: 1)
+Time slot  29
+	CPU 0: Processed  1 has finished (niceness: 0, vruntime: 6.835938)
+	      Waiting time: 20, Turnaround time: 28, CPU burst time: 8
+	CPU 0: Dispatched process  3 (niceness: 5, weight: 724.077344, vruntime: 6.905340, time_slice: 1)
+Time slot  30
+	CPU 0: Put process  3 to run queue (niceness: 5, vruntime: 8.286408)
+	CPU 0: Dispatched process  2 (niceness: -5, weight: 1448.154688, vruntime: 6.905340, time_slice: 2)
+Time slot  31
+Time slot  32
+	CPU 0: Processed  2 has finished (niceness: -5, vruntime: 6.905340)
+	      Waiting time: 18, Turnaround time: 30, CPU burst time: 12
+	CPU 0: Dispatched process  4 (niceness: 10, weight: 512.000000, vruntime: 7.812500, time_slice: 1)
+Time slot  33
+	CPU 0: Processed  4 has finished (niceness: 10, vruntime: 7.812500)
+	      Waiting time: 24, Turnaround time: 29, CPU burst time: 5
+	CPU 0: Dispatched process  3 (niceness: 5, weight: 724.077344, vruntime: 8.286408, time_slice: 3)
+Time slot  34
+Time slot  35
+Time slot  36
+	CPU 0: Processed  3 has finished (niceness: 5, vruntime: 8.286408)
+	      Waiting time: 24, Turnaround time: 33, CPU burst time: 9
 	CPU 0 stopped
+
+=== Scheduling Statistics ===
+Scheduler: CFS (Completely Fair Scheduler)
+Number of processes completed: 4
+Average waiting time: 21.50 time units
+Average turnaround time: 30.00 time units
+============================
